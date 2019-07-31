@@ -222,6 +222,7 @@ import_ephys_mat_1 <- function
  animal,
  channels_per_animal=5,
  channels_to_retain=seq_len(channels_per_animal-1),
+ channel_grep="^AI[0-9a-zA-Z]+$",
  drop_unused_channels=TRUE,
  verbose=FALSE,
  ...)
@@ -237,10 +238,10 @@ import_ephys_mat_1 <- function
          "Detecting channels.");
    }
    sdim_mat <- sdim(mat_l);
-   mat_chs <- vigrep("^AI[0-9A-Za-z]+$", names(mat_l));
+   mat_chs <- vigrep(channel_grep, names(mat_l));
    use_chs <- rownames(
       subset(sdim_mat,
-         grepl("^AI[0-9A-Za-z]+$", rownames(sdim_mat)) &
+         grepl(channel_grep, rownames(sdim_mat)) &
             rows > 10000)
    );
    if (verbose) {
@@ -252,6 +253,9 @@ import_ephys_mat_1 <- function
       printDebug("import_ephys_mat_1(): ",
          "Detected channels have the wrong length, compared to channels_per_animal:",
          channels_per_animal);
+      printDebug("import_ephys_mat_1(): ",
+         "use_chs:",
+         use_chs);
    }
    ch_multiple <- length(use_chs) / channels_per_animal;
    blank_v <- makeNames(rep("blank", ch_multiple));
