@@ -64,3 +64,7 @@ animals are separated by a space.
 experimental phases.
 }
 }
+\seealso{
+Other jam import functions: \code{\link{import_ephys_mat_1}}
+}
+\concept{jam import functions}

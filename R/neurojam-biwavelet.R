@@ -76,6 +76,8 @@
 #' @param ... additional arguments are passed to `biwavelet::wt()`
 #'    when `iWt` is not supplied.
 #'
+#' @family jam wavelet functions
+#'
 #' @export
 calc_ephys_wavelet <- function
 (x,
@@ -206,6 +208,9 @@ calc_ephys_wavelet <- function
 }
 
 #' Plot Ephys wavelet data
+#'
+#' @family jam wavelet functions
+#' @family jam plot functions
 #'
 #' @export
 plot_ephys_wavelet <- function

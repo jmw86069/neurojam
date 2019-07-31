@@ -11,3 +11,10 @@ plot_ephys_event_data(mat_l, channel, plot_which = c("all", "events",
 \description{
 Plot Ephys event data
 }
+\seealso{
+Other jam event functions: \code{\link{get_ephys_event_data}}
+
+Other jam plot functions: \code{\link{plot_ephys_wavelet}}
+}
+\concept{jam event functions}
+\concept{jam plot functions}

@@ -13,3 +13,7 @@ get_ephys_event_data(mat_l, channel, events = NULL,
 \description{
 Get Ephys event data
 }
+\seealso{
+Other jam event functions: \code{\link{plot_ephys_event_data}}
+}
+\concept{jam event functions}

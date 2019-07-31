@@ -98,3 +98,7 @@ a numeric matrix \code{m} supplied directly. In the latter
 case, \code{biwavelet::wt()} is not necessary and may
 be substantially faster.
 }
+\seealso{
+Other jam wavelet functions: \code{\link{plot_ephys_wavelet}}
+}
+\concept{jam wavelet functions}

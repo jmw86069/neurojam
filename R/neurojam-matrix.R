@@ -1,5 +1,7 @@
 #' Condense a spectral frequence data matrix
 #'
+#' @family jam matrix functions
+#'
 #' @export
 condense_freq_matrix <- function
 (x,

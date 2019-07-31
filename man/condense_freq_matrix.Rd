@@ -10,3 +10,4 @@ condense_freq_matrix(x, column_n = ncol(x), row_n = nrow(x),
 \description{
 Condense a spectral frequence data matrix
 }
+\concept{jam matrix functions}

@@ -29,6 +29,8 @@
 #'    `jamba::setTextContrastColor()` to determine a contrasting
 #'    label color.
 #'
+#' @family jam misc functions
+#'
 #' @examples
 #' x <- list(
 #'    A=c("one", "two", "three"),

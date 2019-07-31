@@ -44,6 +44,8 @@
 #' @param ... additional arguments are passed to `plot_ephys_event_data()`
 #'    when `do_plot=TRUE`.
 #'
+#' @family jam import functions
+#'
 #'
 #' @export
 import_ephys_mat <- function
@@ -211,6 +213,8 @@ import_ephys_mat <- function
 }
 
 #' Import single MatLab .mat file
+#'
+#' @family jam import functions
 #'
 #' @export
 import_ephys_mat_1 <- function

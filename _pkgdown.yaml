@@ -1,0 +1,28 @@
+template:
+  params:
+    bootswatch: cosmo
+reference:
+- title: Event data functions
+  desc: Functions to manipulate behavioral event data
+  contents:
+  - has_concept("jam event functions")
+- title: Plot functions
+  desc: Functions to create data visualizations
+  contents:
+  - has_concept("jam plot functions")
+- title: Matrix functions
+  desc: Functions to manipulate numeric matrix data
+  contents:
+  - has_concept("jam matrix functions")
+- title: Wavelet functions
+  desc: Functions to manipulate wavelet data
+  contents:
+  - has_concept("jam wavelet functions")
+- title: Import functions
+  desc: Functions that assist with importing neurophysiology data
+  contents:
+  - has_concept("jam import functions")
+- title: Miscellaneous functions
+  desc: Functions for a variety of data manipulations
+  contents:
+  - has_concept("jam misc functions")

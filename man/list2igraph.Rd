@@ -52,3 +52,4 @@ x <- list(
 plot(list2igraph(x))
 
 }
+\concept{jam misc functions}

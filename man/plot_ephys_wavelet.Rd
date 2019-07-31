@@ -16,3 +16,10 @@ plot_ephys_wavelet(x, iWt = NULL, style = c("default", "jam", "CH"),
 \description{
 Plot Ephys wavelet data
 }
+\seealso{
+Other jam wavelet functions: \code{\link{calc_ephys_wavelet}}
+
+Other jam plot functions: \code{\link{plot_ephys_event_data}}
+}
+\concept{jam plot functions}
+\concept{jam wavelet functions}

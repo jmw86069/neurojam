@@ -1,5 +1,8 @@
 #' Plot Ephys event data
 #'
+#' @family jam event functions
+#' @family jam plot functions
+#'
 #' @export
 plot_ephys_event_data <- function
 (mat_l,

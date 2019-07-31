@@ -11,3 +11,7 @@ import_ephys_mat_1(mat_file, animal, channels_per_animal = 5,
 \description{
 Import single MatLab .mat file
 }
+\seealso{
+Other jam import functions: \code{\link{import_ephys_mat}}
+}
+\concept{jam import functions}

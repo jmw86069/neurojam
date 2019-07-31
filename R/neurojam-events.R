@@ -1,5 +1,7 @@
 #' Get Ephys event data
 #'
+#' @family jam event functions
+#'
 #' @export
 get_ephys_event_data <- function
 (mat_l,
