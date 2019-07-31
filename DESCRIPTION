@@ -1,0 +1,24 @@
+Package: neurojam
+Title: Neurobehavioral Jam analysis methods
+Version: 0.0.0.9000
+Authors@R: person(given="James M.", family="Ward",
+    email="jmw86069@gmail.com", role=c("aut", "cre"))
+Description: Neurobehavior and E-physiology analysis methods
+    related to Plexon and other neural signal processing data.
+Depends: R (>= 3.5.1)
+Imports: jamba,
+    colorjam,
+    biwavelet,
+    psd,
+    R.matlab,
+    igraph
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Remotes: github::jmw86069/jamba,
+    github::jmw86069/colorjam
+URL: http://github.com/jmw86069/neurojam
+BugReports: http://github.com/jmw86069/neurojam/issues
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
