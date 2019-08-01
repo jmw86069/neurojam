@@ -290,7 +290,11 @@ import_ephys_mat_1 <- function
                "use_chs_v:",
                use_chs_v);
          }
-         drop_chs1 <- setdiff(use_chs, use_chs_v);
+         ## Changed to drop all channels (mat_chs)
+         ##not just usable channels (use_chs)
+         #drop_chs1 <- setdiff(use_chs, use_chs_v);
+         drop_chs1 <- setdiff(mat_chs, use_chs_v);
+
          drop_chs <- provigrep(paste0("^", drop_chs1),
             names(mat_l));
          keep_chs <- setdiff(names(mat_l), drop_chs);

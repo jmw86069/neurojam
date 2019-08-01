@@ -25,6 +25,7 @@ plot_ephys_event_data <- function
    }
    ## Transform eventData into milliseconds
    event_data_l <- get_ephys_event_data(mat_l,
+      channels=channel,
       ...);
    i_step <- event_data_l$step;
    i_ind <- event_data_l$ind;

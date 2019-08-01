@@ -5,10 +5,10 @@
 #' @export
 condense_freq_matrix <- function
 (x,
-   column_n=ncol(x),
-   row_n=nrow(x),
-   verbose=TRUE,
-   ...)
+ column_n=ncol(x),
+ row_n=nrow(x),
+ verbose=TRUE,
+ ...)
 {
    ## Purpose is to condense a large data matrix by summarizing groups
    ## or row or column values

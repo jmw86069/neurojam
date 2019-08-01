@@ -106,7 +106,7 @@ calc_ephys_wavelet <- function
          printDebug("calc_ephys_wavelet(): ",
             "Running biwavelet::wt()");
       }
-      if (length(dim(x)) == 0) {
+      if (length(dim(x)) == 0 || ncol(x) == 1) {
          if ("label_start" %in% names(attributes(x))) {
             label_start <- attr(x, "label_start") * i_step;
          } else {
@@ -116,6 +116,11 @@ calc_ephys_wavelet <- function
             seq(from=i_step - label_start,
                by=i_step,
                length.out=length(x)));
+      }
+      if (verbose) {
+         printDebug("calc_ephys_wavelet(): ",
+            "head(cbind(x[,2], x[,1])):");
+         print(head(cbind(x[,2], x[,1])));
       }
       iWt <- wt(cbind(x[,2], x[,1]),
          do.sig=do.sig,
@@ -147,7 +152,7 @@ calc_ephys_wavelet <- function
             formatInt(column_n),
             " columns");
       }
-      iM2 <- condense_matrix(iM,
+      iM2 <- condense_freq_matrix(iM,
          column_n=column_n,
          verbose=verbose);
    }
@@ -195,6 +200,9 @@ calc_ephys_wavelet <- function
    attr(iM, "lab_row") <- lab_row;
 
    if ("m" %in% return_type) {
+      if (x_condense_factor > 1) {
+         return(iM2);
+      }
       return(iM);
    }
    iWt$lab_row <- lab_row;
@@ -202,6 +210,9 @@ calc_ephys_wavelet <- function
    ret_l <- list();
    ret_l$iWt <- iWt;
    ret_l$iM <- iM;
+   if (x_condense_factor > 1) {
+      ret_l$iM2 <- iM2;
+   }
    ret_l$lab_col <- lab_col;
    ret_l$colsep <- colsep;
    return(ret_l);
@@ -486,3 +497,76 @@ m=NULL,
    invisible(iWt);
 }
 
+#' Event to frequency profile
+#'
+#' @export
+event_freq_profile <- function
+(events_m_1,
+ i_step=0.001,
+ animal,
+ event,
+ channel,
+ time_bin_n=2,
+ time_bin_labels=c("tone", "trace"),
+ return_type=c("profile", "list"),
+ verbose=FALSE,
+ ...)
+{
+   return_type <- match.arg(return_type);
+   if (verbose) {
+      printDebug("event_freq_profile: ",
+         "calc_ephys_wavelet() started");
+   }
+   i_m <- calc_ephys_wavelet(x=events_m_1,
+      return_type="m",
+      type="power.corr",
+      x_condense_factor=100,
+      i_step=i_step);
+   if (verbose) {
+      printDebug("event_freq_profile: ",
+         "calc_ephys_wavelet() complete");
+   }
+
+   iM2 <- i_m;
+   iM2period <- as.numeric(rownames(iM2));
+   iM2hz <- 1/iM2period;
+   rownames(iM2) <- rev(iM2hz);
+   #heatmap.3(log2(iM2), Colv=FALSE, Rowv=FALSE, useRaster=TRUE, labCol=NA);
+
+   ## Convert log-scaled frequency to normal scale
+   freq_seq <- seq(from=0.9, to=20, by=0.2);
+   x2i <- closest_value(log2(freq_seq), log2(iM2hz), value=FALSE);
+   iM2normal <- rbindList(lapply(head(seq_along(x2i), -1), function(i){
+      irows <- seq(from=x2i[i], to=x2i[i+1]);
+      colMeans(iM2[irows,,drop=FALSE]);
+   }));
+   freq_bins <- head(freq_seq, -1) + diff(freq_seq)/2;
+   rownames(iM2normal) <- freq_bins;
+
+   time_bin_cuts <- seq(from=0, to=39, length.out=time_bin_n + 1);
+   time_bin_labels <- makeNames(rep(time_bin_labels, length.out=time_bin_n));
+   cut_breaks <- c(-Inf, time_bin_cuts, Inf);
+   cut_labels <- c("pre", time_bin_labels, "post");
+
+   col_sets <- split(colnames(iM2normal),
+      cut(as.numeric(colnames(iM2normal)),
+         breaks=cut_breaks,
+         labels=cut_labels));
+   par("mfrow"=c(3,1));
+   cut_m <- do.call(cbind, lapply(col_sets, function(i){
+      rowMeans(log2(iM2normal[,i]));
+   }));
+   cut_df <- data.frame(freq=as.numeric(rownames(cut_m)), cut_m);
+   cut_tall <- tidyr::gather(cut_df, "time_bin", "value", -freq, factor_key=TRUE);
+   value_baseline <- median(subset(cut_tall, freq < 5)$value);
+   cut_tall$adj_value <- cut_tall$value - value_baseline;
+   cut_tall$animal <- animal;
+   cut_tall$event <- event;
+   cut_tall$channel <- channel;
+   if ("list" %in% return_type) {
+      ret_vals <- list();
+      ret_vals$i_m <- i_m;
+      ret_vals$cut_tall <- cut_tall;
+   }
+   cut_tall;
+}

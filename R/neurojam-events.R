@@ -5,7 +5,7 @@
 #' @export
 get_ephys_event_data <- function
 (mat_l,
- channel,
+ channels,
  events=NULL,
  event_offset=NULL,
  event_start=2,
@@ -56,8 +56,32 @@ get_ephys_event_data <- function
    }
 
    ## Transform eventData into milliseconds
-   i_step <- attr(mat_l[[head(channels, 1)]], "ts.step")[1,1];
-   i_ind <- tail(attr(mat_l[[head(channels, 1)]], "ind")[,1], 1);
+   if ("ts.step" %in% names(attributes(mat_l[[head(channels, 1)]]))) {
+      i_step <- attr(mat_l[[head(channels, 1)]], "ts.step")[1,1];
+   } else {
+      ts_channel <- paste0(channels[1], ".ts.step");
+      if (ts_channel %in% names(mat_l)) {
+         i_step <- mat_l[[ts_channel]][1,1];
+      } else {
+         stop("Could not find 'ts.step' in attributes(mat_l[[channels[1]]]) nor names(mat_l)");
+      }
+   }
+   if ("ind" %in% names(attributes(mat_l[[head(channels, 1)]]))) {
+      i_ind <- tail(attr(mat_l[[head(channels, 1)]], "ind")[,1], 1);
+   } else {
+      ind_channel <- paste0(channels[1], ".ind");
+      if (ind_channel %in% names(mat_l)) {
+         i_ind <- tail(mat_l[[ind_channel]][,1], 1);
+      } else {
+         stop("Could not find 'ind' in attributes(mat_l[[channels[1]]]) nor names(mat_l)");
+      }
+   }
+   if (verbose) {
+      printDebug("get_ephys_event_data(): ",
+         "i_step:", i_step);
+      printDebug("get_ephys_event_data(): ",
+         "i_ind:", i_ind);
+   }
 
    ## Overall Start
    all_start <- mat_l$Start[2,1];
@@ -167,6 +191,9 @@ get_ephys_event_data <- function
       });
    });
    events_m <- do.call(cbind, events_l);
+   dimnames(events_m) <- list(
+      event=rownames(events_m),
+      channel=colnames(events_m));
    #ret_l$events_l <- events_l;
    ret_l$events_m <- events_m;
 

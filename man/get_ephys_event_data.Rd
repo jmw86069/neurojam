@@ -4,7 +4,7 @@
 \alias{get_ephys_event_data}
 \title{Get Ephys event data}
 \usage{
-get_ephys_event_data(mat_l, channel, events = NULL,
+get_ephys_event_data(mat_l, channels, events = NULL,
   event_offset = NULL, event_start = 2, event_stop = 3,
   event_prestart = 4000, event_poststop = 4000, event_label = "Tone",
   event_grep = "^EV", attr_names = c("animal", "channel", "ts.step",

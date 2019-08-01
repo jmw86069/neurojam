@@ -2,6 +2,7 @@
 
 export(calc_ephys_wavelet)
 export(condense_freq_matrix)
+export(event_freq_profile)
 export(get_ephys_event_data)
 export(import_ephys_mat)
 export(import_ephys_mat_1)

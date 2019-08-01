@@ -6,7 +6,8 @@
 \usage{
 import_ephys_mat_1(mat_file, animal, channels_per_animal = 5,
   channels_to_retain = seq_len(channels_per_animal - 1),
-  drop_unused_channels = TRUE, verbose = FALSE, ...)
+  channel_grep = "^AI[0-9a-zA-Z]+$", drop_unused_channels = TRUE,
+  verbose = FALSE, ...)
 }
 \description{
 Import single MatLab .mat file
