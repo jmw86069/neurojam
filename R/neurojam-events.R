@@ -2,6 +2,10 @@
 #'
 #' @family jam event functions
 #'
+#' @param default_event_diff integer value with the default
+#'    time in seconds between event_start and event_stop values,
+#'    intended when data in event_stop is truncated.
+#'
 #' @export
 get_ephys_event_data <- function
 (mat_l,
@@ -10,11 +14,13 @@ get_ephys_event_data <- function
  event_offset=NULL,
  event_start=2,
  event_stop=3,
+ default_event_diff=40,
  event_prestart=4000,
  event_poststop=4000,
  event_label="Tone",
  event_grep="^EV",
  attr_names=c("animal", "channel", "ts.step", "ts"),
+ all_start_row=2,
  verbose=FALSE,
  ...)
 {
@@ -44,6 +50,24 @@ get_ephys_event_data <- function
    event_names <- provigrep(event_grep, names(mat_l));
    event_data <- mat_l[event_names];
 
+   if (nrow(event_data[[event_start]]) > nrow(event_data[[event_stop]])) {
+      if (length(default_event_diff) > 0) {
+         if (verbose) {
+            printDebug("get_ephys_event_data(): ",
+               "Repairing incomplete event stop, from:");
+            print(event_data[[event_stop]]);
+         }
+         new_event_rows <- event_data[[event_start]] + default_event_diff;
+         diff_nrow <- nrow(event_data[[event_start]]) - nrow(event_data[[event_stop]]);
+         event_data[[event_stop]] <- rbind(event_data[[event_stop]],
+            tail(new_event_rows, diff_nrow));
+         if (verbose) {
+            printDebug("get_ephys_event_data(): ",
+               "Repairing incomplete event stop, to:");
+            print(event_data[[event_stop]]);
+         }
+      }
+   }
    ## Check that start and stop dimensions are identical
    if (nrow(event_data[[event_start]]) != nrow(event_data[[event_stop]])) {
       stop(paste0("The nrow of event_start '",
@@ -84,7 +108,15 @@ get_ephys_event_data <- function
    }
 
    ## Overall Start
-   all_start <- mat_l$Start[2,1];
+   if (nrow(mat_l$Start) < all_start_row) {
+      printDebug("get_ephys_event_data(): ",
+         "mat_l$Start did not have nrow > all_start_row:",
+         all_start_row);
+      printDebug("get_ephys_event_data(): ",
+         "Returning NULL event data.");
+      return(NULL);
+   }
+   all_start <- mat_l$Start[all_start_row,1];
 
    ## Determine event start and stop indices
    if (length(event_offset) > 0) {
@@ -154,6 +186,30 @@ get_ephys_event_data <- function
    if (length(names(channels)) == 0) {
       names(channels) <- makeNames(channels);
    }
+   ## Subset i_events to those with data available
+   in_range_l <- sapply(i_events, function(k){
+      i_channel <- head(channels, 1);
+      i_event <- as.character(k);
+      i_range <- (c(
+         i_starts[i_event] - event_prestart,
+         i_stops[i_event] + event_poststop
+      ));
+      (i_range[1] <= length(mat_l[[i_channel]]) &
+         i_range[2] <= length(mat_l[[i_channel]]))
+   });
+   if (any(!in_range_l)) {
+      if (verbose) {
+         printDebug("get_ephys_event_data(): ",
+            "in_range_l:", in_range_l);
+      }
+      i_events <- i_events[in_range_l];
+      if (verbose) {
+         printDebug("get_ephys_event_data(): ",
+            "new i_events:", i_events);
+      }
+   }
+
+   ## iterate each channel, each event
    events_l <- lapply(channels, function(i_channel){
       i_v_l <- lapply(i_events, function(k){
          i_event <- as.character(k);

@@ -4,7 +4,9 @@
 \alias{event_freq_profile}
 \title{Event to frequency profile}
 \usage{
-event_freq_profile(events_m_1, i_step = 0.001, verbose = FALSE, ...)
+event_freq_profile(events_m_1, i_step = 0.001, animal, event, channel,
+  time_bin_n = 2, time_bin_labels = c("tone", "trace"),
+  return_type = c("profile", "list"), verbose = FALSE, ...)
 }
 \description{
 Event to frequency profile

@@ -567,6 +567,7 @@ event_freq_profile <- function
       ret_vals <- list();
       ret_vals$i_m <- i_m;
       ret_vals$cut_tall <- cut_tall;
+      return(ret_vals);
    }
-   cut_tall;
+   return(cut_tall);
 }

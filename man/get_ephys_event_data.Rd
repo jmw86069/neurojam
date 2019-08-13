@@ -6,9 +6,15 @@
 \usage{
 get_ephys_event_data(mat_l, channels, events = NULL,
   event_offset = NULL, event_start = 2, event_stop = 3,
-  event_prestart = 4000, event_poststop = 4000, event_label = "Tone",
-  event_grep = "^EV", attr_names = c("animal", "channel", "ts.step",
-  "ts"), verbose = FALSE, ...)
+  default_event_diff = 40, event_prestart = 4000,
+  event_poststop = 4000, event_label = "Tone", event_grep = "^EV",
+  attr_names = c("animal", "channel", "ts.step", "ts"),
+  all_start_row = 2, verbose = FALSE, ...)
+}
+\arguments{
+\item{default_event_diff}{integer value with the default
+time in seconds between event_start and event_stop values,
+intended when data in event_stop is truncated.}
 }
 \description{
 Get Ephys event data

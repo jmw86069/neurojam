@@ -1,6 +1,6 @@
 Package: neurojam
 Title: Neurobehavioral Jam analysis methods
-Version: 0.0.1.9000
+Version: 0.0.2.9000
 Authors@R: person(given="James M.", family="Ward",
     email="jmw86069@gmail.com", role=c("aut", "cre"))
 Description: Neurobehavior and E-physiology analysis methods
@@ -11,7 +11,9 @@ Imports: jamba,
     biwavelet,
     psd,
     R.matlab,
-    igraph
+    igraph,
+    DBI
+Suggests: RSQLite
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
