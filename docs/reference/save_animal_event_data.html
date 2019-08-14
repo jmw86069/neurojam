@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Condense a spectral frequence data matrix — condense_freq_matrix • neurojam</title>
+<title>Save event signal data per animal — save_animal_event_data • neurojam</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Condense a spectral frequence data matrix — condense_freq_matrix" />
+<meta property="og:title" content="Save event signal data per animal — save_animal_event_data" />
 
-<meta property="og:description" content="Condense a spectral frequence data matrix" />
+<meta property="og:description" content="Save event signal data per animal" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -102,26 +102,55 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Condense a spectral frequence data matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-matrix.R'><code>R/neurojam-matrix.R</code></a></small>
-    <div class="hidden name"><code>condense_freq_matrix.Rd</code></div>
+    <h1>Save event signal data per animal</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-db.R'><code>R/neurojam-db.R</code></a></small>
+    <div class="hidden name"><code>save_animal_event_data.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Condense a spectral frequence data matrix</p>
+    <p>Save event signal data per animal</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>condense_freq_matrix</span>(<span class='no'>x</span>, <span class='kw'>column_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>row_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>x</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
-        
+    <pre class="usage"><span class='fu'>save_animal_event_data</span>(<span class='no'>con</span>, <span class='no'>events_m</span>, <span class='no'>animal</span>, <span class='no'>project</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='st'>""</span>,
+  <span class='kw'>step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>animal_event_data_table</span> <span class='kw'>=</span> <span class='st'>"animal_event_data"</span>,
+  <span class='kw'>dryrun</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>con</th>
+      <td><p>database connection with class <code>DBIConnection</code>,
+for example produced from <code><a href='https://www.rdocumentation.org/packages/DBI/topics/dbConnect'>DBI::dbConnect()</a></code>. The database
+can be of any type compatible with <code>DBI</code>, for example
+<code>dbConnect(RMySQL::MySQL())</code> produces an object of
+class <code>MySQLConnection</code> which extends <code>DBIConnection</code>.</p></td>
+    </tr>
+    <tr>
+      <th>events_m</th>
+      <td><p>matrix containing lists of numeric vectors,
+where each cell contains a numeric vector of raw signal.
+The <code><a href='https://www.rdocumentation.org/packages/base/topics/colnames'>colnames(events_m)</a></code> are channel names, and
+<code><a href='https://www.rdocumentation.org/packages/base/topics/colnames'>rownames(events_m)</a></code> are event names.</p></td>
+    </tr>
+    </table>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function saves the subset of raw signal per
+per animal, per channel, and per annotated event.</p>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-                </ul>
+      <li><a href="#arguments">Arguments</a></li>
+      
+      <li><a href="#details">Details</a></li>
+          </ul>
 
   </div>
 </div>

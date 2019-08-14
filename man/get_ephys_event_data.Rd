@@ -9,12 +9,68 @@ get_ephys_event_data(mat_l, channels, events = NULL,
   default_event_diff = 40, event_prestart = 4000,
   event_poststop = 4000, event_label = "Tone", event_grep = "^EV",
   attr_names = c("animal", "channel", "ts.step", "ts"),
-  all_start_row = 2, verbose = FALSE, ...)
+  all_start_grep = "^Start", all_start_row = 2, verbose = FALSE, ...)
 }
 \arguments{
+\item{mat_l}{\code{list} containing raw signal output from
+\code{import_ephys_mat_1()} when importing a Matlab \code{.mat} file,
+or from \code{get_animal_raw_data()} when retrieving raw signal
+output from a database. It should contain \code{matrix} entries
+whose names match argument \code{event_grep}, typically one
+matrix with start values, and one matrix with stop values.}
+
+\item{channels}{character vector of channel names with raw signal
+data in \code{mat_l}.}
+
+\item{events}{integer vector of events to retain, in order they
+appear in the event start table. When \code{events} is \code{NULL}, then
+all events are returned.}
+
+\item{event_offset}{integer index to the list of event matrices
+whose named matched \code{event_grep}, which contains event time
+offset values, or NULL to use no offset values. Sometimes the
+first event table contains an offset value to apply before
+taking the event start and stop times.}
+
+\item{event_start, event_stop}{integer index to the list of event
+matrices whose named matched \code{event_grep}, which contains event
+start and stop times. By default the second (2) and third (3)
+matrices are used for start and stop times, respectively.}
+
 \item{default_event_diff}{integer value with the default
 time in seconds between event_start and event_stop values,
-intended when data in event_stop is truncated.}
+intended when data in event_stop is truncated. For example
+when the event_start matrix has 3 rows, and the event_stop matrix
+has 2 rows, the third row of event_stop is calculated by adding
+\code{default_event_diff} to the third row of event_start.}
+
+\item{event_prestart, event_poststop}{integer number of steps to
+include before each event start, and after each event stop,
+respectively.}
+
+\item{event_label}{character value used to create a text label
+for each event, where event is numbered starting from 1.}
+
+\item{event_grep}{character pattern used to identify the names in
+\code{mat_l} which represent numeric event matrices. The default is
+expected to match \code{"EVT01"}, \code{"EVT02"}, \code{"EVT03"}, where the
+\code{"EVT02"} contains event start values, and \code{"EVT03"} contains
+event stop values.}
+
+\item{attr_names}{character vector of attributes to include
+within each event data matrix.}
+
+\item{all_start_grep}{character pattern of the name in \code{mat_l}
+containing the overall start offset position. The default
+uses \code{mat_l$Start}.}
+
+\item{all_start_row}{integer row number of the matrix defined
+by \code{all_start_grep} to use as the overall start offset. The
+start offset can be verified by using argument \code{verbose=TRUE}.}
+
+\item{verbose}{logical indicating whether to print verbose output.}
+
+\item{...}{additional arguments are ignored.}
 }
 \description{
 Get Ephys event data

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Condense a spectral frequence data matrix — condense_freq_matrix • neurojam</title>
+<title>Get animal event data — get_animal_event_data • neurojam</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Condense a spectral frequence data matrix — condense_freq_matrix" />
+<meta property="og:title" content="Get animal event data — get_animal_event_data" />
 
-<meta property="og:description" content="Condense a spectral frequence data matrix" />
+<meta property="og:description" content="Get animal event data" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -102,19 +102,21 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Condense a spectral frequence data matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-matrix.R'><code>R/neurojam-matrix.R</code></a></small>
-    <div class="hidden name"><code>condense_freq_matrix.Rd</code></div>
+    <h1>Get animal event data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-db.R'><code>R/neurojam-db.R</code></a></small>
+    <div class="hidden name"><code>get_animal_event_data.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Condense a spectral frequence data matrix</p>
+    <p>Get animal event data</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>condense_freq_matrix</span>(<span class='no'>x</span>, <span class='kw'>column_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>row_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>x</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>get_animal_event_data</span>(<span class='no'>con</span>, <span class='kw'>animal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>project</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>phase</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>channel</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>event</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>animal_event_data_table</span> <span class='kw'>=</span> <span class='st'>"animal_event_data"</span>, <span class='kw'>return_signal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='no'>...</span>)</pre>
         
 
   </div>

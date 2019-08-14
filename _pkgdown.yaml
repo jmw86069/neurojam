@@ -6,6 +6,10 @@ reference:
   desc: Functions to manipulate behavioral event data
   contents:
   - has_concept("jam event functions")
+- title: Ephys database functions
+  desc: Functions to store Ephys data in relational database
+  contents:
+  - has_concept("jam database functions")
 - title: Plot functions
   desc: Functions to create data visualizations
   contents:

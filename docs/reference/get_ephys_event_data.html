@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">neurojam</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2.9000</span>
       </span>
     </div>
 
@@ -77,6 +77,9 @@
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -110,12 +113,24 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>get_ephys_event_data</span>(<span class='no'>mat_l</span>, <span class='no'>channel</span>, <span class='kw'>events</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+    <pre class="usage"><span class='fu'>get_ephys_event_data</span>(<span class='no'>mat_l</span>, <span class='no'>channels</span>, <span class='kw'>events</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>event_offset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>event_start</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>event_stop</span> <span class='kw'>=</span> <span class='fl'>3</span>,
-  <span class='kw'>event_prestart</span> <span class='kw'>=</span> <span class='fl'>4000</span>, <span class='kw'>event_poststop</span> <span class='kw'>=</span> <span class='fl'>4000</span>, <span class='kw'>event_label</span> <span class='kw'>=</span> <span class='st'>"Tone"</span>,
-  <span class='kw'>event_grep</span> <span class='kw'>=</span> <span class='st'>"^EV"</span>, <span class='kw'>attr_names</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"animal"</span>, <span class='st'>"channel"</span>, <span class='st'>"ts.step"</span>,
-  <span class='st'>"ts"</span>), <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
-        
+  <span class='kw'>default_event_diff</span> <span class='kw'>=</span> <span class='fl'>40</span>, <span class='kw'>event_prestart</span> <span class='kw'>=</span> <span class='fl'>4000</span>,
+  <span class='kw'>event_poststop</span> <span class='kw'>=</span> <span class='fl'>4000</span>, <span class='kw'>event_label</span> <span class='kw'>=</span> <span class='st'>"Tone"</span>, <span class='kw'>event_grep</span> <span class='kw'>=</span> <span class='st'>"^EV"</span>,
+  <span class='kw'>attr_names</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"animal"</span>, <span class='st'>"channel"</span>, <span class='st'>"ts.step"</span>, <span class='st'>"ts"</span>),
+  <span class='kw'>all_start_row</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>default_event_diff</th>
+      <td><p>integer value with the default
+time in seconds between event_start and event_stop values,
+intended when data in event_stop is truncated.</p></td>
+    </tr>
+    </table>
+    
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other jam event functions: <code>plot_ephys_event_data</code></p></div>
@@ -125,6 +140,7 @@
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#see-also">See also</a></li>
           </ul>

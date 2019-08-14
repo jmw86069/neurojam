@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">neurojam</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2.9000</span>
       </span>
     </div>
 
@@ -77,6 +77,9 @@
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -112,7 +115,8 @@
 
     <pre class="usage"><span class='fu'>import_ephys_mat_1</span>(<span class='no'>mat_file</span>, <span class='no'>animal</span>, <span class='kw'>channels_per_animal</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>channels_to_retain</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/seq'>seq_len</a></span>(<span class='no'>channels_per_animal</span> - <span class='fl'>1</span>),
-  <span class='kw'>drop_unused_channels</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+  <span class='kw'>channel_grep</span> <span class='kw'>=</span> <span class='st'>"^AI[0-9a-zA-Z]+$"</span>, <span class='kw'>drop_unused_channels</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
         
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Condense a spectral frequence data matrix — condense_freq_matrix • neurojam</title>
+<title>Make Ephys short name — ephys_short_name • neurojam</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Condense a spectral frequence data matrix — condense_freq_matrix" />
+<meta property="og:title" content="Make Ephys short name — ephys_short_name" />
 
-<meta property="og:description" content="Condense a spectral frequence data matrix" />
+<meta property="og:description" content="Make Ephys short name" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -102,26 +102,73 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Condense a spectral frequence data matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-matrix.R'><code>R/neurojam-matrix.R</code></a></small>
-    <div class="hidden name"><code>condense_freq_matrix.Rd</code></div>
+    <h1>Make Ephys short name</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-db.R'><code>R/neurojam-db.R</code></a></small>
+    <div class="hidden name"><code>ephys_short_name.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Condense a spectral frequence data matrix</p>
+    <p>Make Ephys short name</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>condense_freq_matrix</span>(<span class='no'>x</span>, <span class='kw'>column_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>row_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>x</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
-        
+    <pre class="usage"><span class='fu'>ephys_short_name</span>(<span class='no'>x</span>, <span class='kw'>max_nchar_word</span> <span class='kw'>=</span> <span class='fl'>4</span>, <span class='kw'>word_pattern</span> <span class='kw'>=</span> <span class='st'>"[a-zA-Z0-9]"</span>,
+  <span class='kw'>remove_extension</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>character vector to be modified to a short name.</p></td>
+    </tr>
+    <tr>
+      <th>max_nchar_word</th>
+      <td><p>integer indicating the maximum
+characters retained per word</p></td>
+    </tr>
+    <tr>
+      <th>word_pattern</th>
+      <td><p>character pattern used to define characters
+which are considered "word" characters.</p></td>
+    </tr>
+    <tr>
+      <th>remove_extension</th>
+      <td><p>logical indicating whether to remove
+file extensions, defined by "." followed by alphanumeric
+characters.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>additional arguments are ignored.</p></td>
+    </tr>
+    </table>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>This function simply creates a short name given
+a label, using some logic specific to Ephys naming
+strategies.</p>
+    
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"FearConditioning"</span>,
+   <span class='st'>"Fear Conditioning"</span>,
+   <span class='st'>"Fear_Conditioning"</span>,
+   <span class='st'>"Fear-Conditioning"</span>);
+<span class='fu'>ephys_short_name</span>(<span class='no'>x</span>);</div><div class='output co'>#&gt; <span class='warning'>Warning: the condition has length &gt; 1 and only the first element will be used</span></div><div class='output co'>#&gt; [1] "FearCond" "FearCond" "FearCond" "FearCond"</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-                </ul>
+      <li><a href="#arguments">Arguments</a></li>
+      
+      <li><a href="#details">Details</a></li>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>

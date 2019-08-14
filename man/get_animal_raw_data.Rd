@@ -13,3 +13,11 @@ get_animal_raw_data(con, animal = NULL, project = NULL, phase = NULL,
 \description{
 Save raw signal data per animal
 }
+\seealso{
+Other jam database functions: \code{\link{ephys_short_name}},
+  \code{\link{extract_event_data}},
+  \code{\link{get_animal_event_data}},
+  \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_raw_data}}
+}
+\concept{jam database functions}

@@ -18,4 +18,22 @@ This function uses \code{get_animal_raw_data()} to
 query the database, retrieve the associated
 animal raw data, then extracts the available
 event data.
+
+In cases where event data for one animal is split across
+two files, the event names are re-numbered in order
+that the events appear across files for the same
+animal. For example, for two files that contain two
+events each for the same animal, events for the
+first file will be labeled \code{c("1", "2")} and the second
+file with be labeled \code{c("3", "4")}. The output is
+therefore suitable to send to \code{save_animal_event_data()}
+so the events can be stored without conflict.
 }
+\seealso{
+Other jam database functions: \code{\link{ephys_short_name}},
+  \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_raw_data}},
+  \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_raw_data}}
+}
+\concept{jam database functions}

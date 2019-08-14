@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Condense a spectral frequence data matrix — condense_freq_matrix • neurojam</title>
+<title>Extract animal event data from raw data — extract_event_data • neurojam</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Condense a spectral frequence data matrix — condense_freq_matrix" />
+<meta property="og:title" content="Extract animal event data from raw data — extract_event_data" />
 
-<meta property="og:description" content="Condense a spectral frequence data matrix" />
+<meta property="og:description" content="Extract animal event data from raw data" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -102,26 +102,38 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Condense a spectral frequence data matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-matrix.R'><code>R/neurojam-matrix.R</code></a></small>
-    <div class="hidden name"><code>condense_freq_matrix.Rd</code></div>
+    <h1>Extract animal event data from raw data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-db.R'><code>R/neurojam-db.R</code></a></small>
+    <div class="hidden name"><code>extract_event_data.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Condense a spectral frequence data matrix</p>
+    <p>Extract animal event data from raw data</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>condense_freq_matrix</span>(<span class='no'>x</span>, <span class='kw'>column_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>row_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>x</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>extract_event_data</span>(<span class='no'>con</span>, <span class='kw'>animal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>project</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>phase</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>source_filename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>source_dirname</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>rdata_filename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rdata_dirname</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>animal_raw_data_table</span> <span class='kw'>=</span> <span class='st'>"animal_raw_data"</span>, <span class='kw'>event_prestart</span> <span class='kw'>=</span> <span class='fl'>4000</span>,
+  <span class='kw'>event_poststop</span> <span class='kw'>=</span> <span class='fl'>4000</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
         
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function uses <code>get_animal_raw_data()</code> to
+query the database, retrieve the associated
+animal raw data, then extracts the available
+event data.</p>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-                </ul>
+      
+      <li><a href="#details">Details</a></li>
+          </ul>
 
   </div>
 </div>

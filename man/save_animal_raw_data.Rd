@@ -95,3 +95,11 @@ interrupted in the middle of an experiment run.
 con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:");
 
 }
+\seealso{
+Other jam database functions: \code{\link{ephys_short_name}},
+  \code{\link{extract_event_data}},
+  \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_raw_data}},
+  \code{\link{save_animal_event_data}}
+}
+\concept{jam database functions}

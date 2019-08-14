@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Condense a spectral frequence data matrix — condense_freq_matrix • neurojam</title>
+<title>Event to frequency profile — event_freq_profile • neurojam</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Condense a spectral frequence data matrix — condense_freq_matrix" />
+<meta property="og:title" content="Event to frequency profile — event_freq_profile" />
 
-<meta property="og:description" content="Condense a spectral frequence data matrix" />
+<meta property="og:description" content="Event to frequency profile" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -102,19 +102,20 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Condense a spectral frequence data matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-matrix.R'><code>R/neurojam-matrix.R</code></a></small>
-    <div class="hidden name"><code>condense_freq_matrix.Rd</code></div>
+    <h1>Event to frequency profile</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jmw86069/neurojam/blob/master/R/neurojam-biwavelet.R'><code>R/neurojam-biwavelet.R</code></a></small>
+    <div class="hidden name"><code>event_freq_profile.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Condense a spectral frequence data matrix</p>
+    <p>Event to frequency profile</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>condense_freq_matrix</span>(<span class='no'>x</span>, <span class='kw'>column_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>x</span>), <span class='kw'>row_n</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>x</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>event_freq_profile</span>(<span class='no'>events_m_1</span>, <span class='kw'>i_step</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='no'>animal</span>, <span class='no'>event</span>, <span class='no'>channel</span>,
+  <span class='kw'>time_bin_n</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>time_bin_labels</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"tone"</span>, <span class='st'>"trace"</span>),
+  <span class='kw'>return_type</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"profile"</span>, <span class='st'>"list"</span>), <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
         
 
   </div>

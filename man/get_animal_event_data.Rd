@@ -6,8 +6,18 @@
 \usage{
 get_animal_event_data(con, animal = NULL, project = NULL,
   phase = NULL, channel = NULL, event = NULL,
-  return_signal = FALSE, ...)
+  event_prestart = NULL, event_poststop = NULL,
+  animal_event_data_table = "animal_event_data", return_signal = FALSE,
+  ...)
 }
 \description{
 Get animal event data
 }
+\seealso{
+Other jam database functions: \code{\link{ephys_short_name}},
+  \code{\link{extract_event_data}},
+  \code{\link{get_animal_raw_data}},
+  \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_raw_data}}
+}
+\concept{jam database functions}

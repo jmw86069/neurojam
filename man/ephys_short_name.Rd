@@ -38,3 +38,11 @@ x <- c("FearConditioning",
 ephys_short_name(x);
 
 }
+\seealso{
+Other jam database functions: \code{\link{extract_event_data}},
+  \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_raw_data}},
+  \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_raw_data}}
+}
+\concept{jam database functions}
