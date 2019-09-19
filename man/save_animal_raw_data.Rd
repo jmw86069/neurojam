@@ -99,7 +99,9 @@ con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:");
 Other jam database functions: \code{\link{ephys_short_name}},
   \code{\link{extract_event_data}},
   \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_event_derived}},
   \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}}
+  \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_event_derived}}
 }
 \concept{jam database functions}

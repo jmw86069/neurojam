@@ -267,6 +267,7 @@ get_animal_raw_data <- function
  rdata_filename=NULL,
  rdata_dirname=NULL,
  animal_raw_data_table="animal_raw_data",
+ channel_grep="^AI[0-9]+$|^FP[0-9]+",
  return_rdata=FALSE,
  verbose=FALSE,
  ...)
@@ -330,7 +331,7 @@ get_animal_raw_data <- function
             "' must contain one object named 'mat_l' and does not:",
             paste(rdata_name, collapse=", ")));
       }
-      channels <- vigrep("^AI[0-9]+$", names(mat_l));
+      channels <- vigrep(channel_grep, names(mat_l));
       ## Filter for channels having 10000 or more rows
       sdim_channels <- sdim(mat_l)[channels,,drop=FALSE];
       channels <- rownames(subset(sdim_channels, rows > 10000));
@@ -365,8 +366,51 @@ get_animal_raw_data <- function
 #' therefore suitable to send to `save_animal_event_data()`
 #' so the events can be stored without conflict.
 #'
+#' @return `data.frame` with colnames include animal,
+#'    project, phase, step, event_prestart, event_poststop,
+#'    event, channel, mat_name, and events_m. The `events_m`
+#'    column is a list of event matrices, whose
+#'    columns contain `channel` names, rownames
+#'    contain `event` numbers, and each cell contains
+#'    the numeric matrix of signal data for each event.
+#'
 #' @family jam database functions
 #'
+#' @param con database connection with class `DBIConnection`,
+#'    for example produced from `DBI::dbConnect()`. The database
+#'    can be of any type compatible with `DBI`, for example
+#'    `dbConnect(RMySQL::MySQL())` produces an object of
+#'    class `MySQLConnection` which extends `DBIConnection`.
+#' @param animal,project,phase
+#'    arguments used to identify the unique entry from which
+#'    the event data was derived, equivalent to parameters
+#'    passed to `get_animal_event_data()`.
+#' @param source_filename,source_dirname,rdata_filename,rdata_dirname
+#'    arguments passed to `get_animal_raw_data()` used
+#'    to filter input data.
+#' @param animal_raw_data_table character name of the database
+#'    table where raw signal results are stored by
+#'    `save_animal_raw_data()`.
+#' @param event_prestart,event_poststop numeric value representing
+#'    the time in seconds to include before and after each
+#'    event, respectively. For example `event_prestart=4`
+#'    will represent 4 seconds, using the `step` information
+#'    included in the raw signal for each channel. The units
+#'    here are intended to allow each channel to have
+#'    independent time step.
+#' @param return_baseline logical indicating whether to
+#'    define a `"baseline"` event which contains the signal
+#'    prior to the first event. Note that the baseline is
+#'    not extended using `event_prestart,event_poststop`.
+#' @param baseline_max_duration numeric value in seconds,
+#'    for the maximum duration of baseline signal to return,
+#'    intended to help baseline signals be consistent
+#'    duration. Some signals may have shorter signal, in
+#'    which case only the available signal duration is
+#'    returned.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are passed to downstream
+#'    functions `get_animal_raw_data()`, `get_ephys_event_data()`.
 #'
 #' @export
 extract_event_data <- function
@@ -379,14 +423,38 @@ extract_event_data <- function
  rdata_filename=NULL,
  rdata_dirname=NULL,
  animal_raw_data_table="animal_raw_data",
- event_prestart=4000,
- event_poststop=4000,
+ event_prestart=4,
+ event_poststop=4,
+ return_baseline=FALSE,
+ base_max_duration=NULL,
  verbose=FALSE,
  ...)
 {
    ## Purpose is to retrieve output from import_ephys_mat_1()
    ## Todo: add event_prestart, event_poststop to the table schema
 
+   ## verify animal exists in the database
+   animal_raw <- get_animal_raw_data(con=con,
+      animal=animal,
+      project=project,
+      phase=phase,
+      source_filename=source_filename,
+      source_dirname=source_dirname,
+      rdata_filename=rdata_filename,
+      rdata_dirname=rdata_dirname,
+      animal_raw_data_table=animal_raw_data_table,
+      return_rdata=FALSE,
+      verbose=verbose,
+      ...);
+   if (length(animal) > 0 &&
+         (length(animal_raw) == 0 || !all(animal %in% animal_raw$animal))) {
+      missing_animals <- setdiff(animal, animal_raw$animal);
+      stop(paste0(
+         "Data is not available for:",
+         jamba::cPaste(missing_animals)));
+   }
+
+   ## load RData containing raw data per animal
    mat_ll <- get_animal_raw_data(con=con,
       animal=animal,
       project=project,
@@ -407,12 +475,33 @@ extract_event_data <- function
       channels <- attr(mat_l, "channels");
       step <- attr(mat_l, "step");
 
+      ## The following checks are temporary, used to catch code that
+      ## formerly defined event_prestart in number of steps,
+      ## and not the actual time unit.
+      if (event_prestart >= 1000) {
+         printDebug("Note: ",
+            "event_prestart is intended to be provided in seconds, ", "",
+            "then converted to time steps using the '", "step", "' value.",
+            fgText=c("red", "orange"));
+         printDebug("Adjusting based upon default step=0.001.");
+         event_prestart <- event_prestart * 0.001;
+      }
+      if (event_poststop >= 1000) {
+         printDebug("Note: ",
+            "event_poststop is intended to be provided in seconds, ", "",
+            "then converted to time steps using the '", "step", "' value.",
+            fgText=c("red", "orange"));
+         printDebug("Adjusting based upon default step=0.001.");
+         event_poststop <- event_poststop * 0.001;
+      }
+
       ## Retrieve event data with some error-checking
       events_m <- tryCatch({
          event_data_l1 <- get_ephys_event_data(mat_l,
             channels=channels,
-            event_prestart=event_prestart,
-            event_poststop=event_poststop,
+            event_prestart=event_prestart/step,
+            event_poststop=event_poststop/step,
+            verbose=verbose,
             ...);
          if (length(event_data_l1) == 0) {
             return(NULL);
@@ -430,10 +519,10 @@ extract_event_data <- function
             attr(event_data_l1$events_m, "step") <- step;
          }
          if (!"event_prestart" %in% names(attributes(event_data_l1$events_m))) {
-            attr(event_data_l1$events_m, "event_prestart") <- event_prestart;
+            attr(event_data_l1$events_m, "event_prestart") <- event_prestart/step;
          }
          if (!"event_poststop" %in% names(attributes(event_data_l1$events_m))) {
-            attr(event_data_l1$events_m, "event_poststop") <- event_poststop;
+            attr(event_data_l1$events_m, "event_poststop") <- event_poststop/step;
          }
          event_data_l1$events_m;
       }, error=function(e){
@@ -445,8 +534,8 @@ extract_event_data <- function
          project=project,
          phase=phase,
          step=step,
-         event_prestart=event_prestart,
-         event_poststop=event_poststop,
+         event_prestart=event_prestart/step,
+         event_poststop=event_poststop/step,
          mat_name=mat_name,
          events_m=I(list(events_m))
       )
@@ -463,6 +552,7 @@ extract_event_data <- function
       for (dupe_animal in dupe_animals) {
          animal_rows <- which(events_df$animal %in% dupe_animal);
          event_num <- 0;
+         inrow <- 0;
          for (animal_row in animal_rows) {
             if (event_num > 0) {
                ievents_m <- events_df[animal_row,"events_m"][[1]];
@@ -579,6 +669,13 @@ ephys_short_name <- function
 #'    and event stop, which are included in the signal being stored.
 #'    If either value is `NULL` the attribute of the same name
 #'    is retrieved if possible, otherwise an error is thrown.
+#' @param event_type character string stored in the database table
+#'    field `"event_type"`, intended to indicate whether a
+#'    particular stored event signal represents `"baseline"` or
+#'    `"event"` data. When `"baseline"` data is stored, it may
+#'    be processed differently, for example in `event_freq_profile()`
+#'    which divides the event signal into time bins, and which
+#'    may not be relevant when working with baseline signal.
 #' @param animal_event_data_table character string with the name
 #'    of the database table in which to store event data.
 #' @param dryrun logical indicating whether to perform database
@@ -599,7 +696,9 @@ save_animal_event_data <- function
  step=NULL,
  event_prestart=NULL,
  event_poststop=NULL,
+ event_type="event",
  animal_event_data_table="animal_event_data",
+ overwrite=FALSE,
  dryrun=FALSE,
  verbose=FALSE,
  ...)
@@ -614,12 +713,44 @@ save_animal_event_data <- function
          stop("When events_m is a list, it must be a list containing only matrix entries.");
       }
       ## Iterate each entry one by one
+      if (verbose) {
+         jamba::printDebug("save_animal_event_data(): ",
+            "Processing list input for ", "events_m");
+      }
       event_res <- lapply(seq_along(events_m), function(in1){
-         ievents_m <- events_m[[in1]];
+         if (length(colnames(events_m[[in1]])) == 0 ||
+               "value" %in% colnames(events_m[[in1]]) ||
+               length(rownames(events_m[[in1]])) == 0) {
+            ievents_m <- matrix(I(list(events_m[[in1]])));
+            i_channel <- attr(events_m[[in1]], "channel");
+            i_event <- attr(events_m[[in1]], "event");
+            if ("event_type" %in% names(attributes(events_m[[in1]]))) {
+               event_type <- attr(events_m[[in1]], "event_type");
+            } else {
+               event_type <- NULL;
+            }
+            colnames(ievents_m)[1] <- i_channel;
+            rownames(ievents_m)[1] <- i_event;
+            attr_names <- setdiff(names(attributes(events_m[[in1]])),
+               c("names", "dimnames", "dim"));
+            attributes(ievents_m)[attr_names] <- attributes(events_m[[in1]])[attr_names];
+            if (verbose && in1 == 1) {
+               jamba::printDebug("save_animal_event_data(): ",
+                  "Processing list of individual signal matrices.");
+            }
+         } else {
+            ievents_m <- events_m[[in1]];
+            if (verbose && in1 == 1) {
+               jamba::printDebug("save_animal_event_data(): ",
+                  "Processing list of channel/event matrices.");
+            }
+         }
+         ## Note that values should be supplied by attributes(ievents_m)
          save_animal_event_data(con=con,
             events_m=ievents_m,
-            project=project,
-            phase=phase,
+            event_type=event_type,
+            animal_event_data_table=animal_event_data_table,
+            overwrite=overwrite,
             dryrun=dryrun,
             verbose=verbose,
             ...);
@@ -627,7 +758,7 @@ save_animal_event_data <- function
       return(event_res);
    }
    if (!is.matrix(events_m)) {
-      stop("The 'events_m' argument is expected to be a matrix.");
+      stop("The 'events_m' argument is expected to be a matrix of matrices.");
    }
    if (length(animal) == 0) {
       animal <- attr(events_m, "animal");
@@ -666,11 +797,19 @@ save_animal_event_data <- function
          stop("event_poststop must be supplied or must be in attributes(events_m).");
       }
    }
+   if (length(event_type) == 0) {
+      event_type <- attr(events_m, "event_type");
+      if (length(event_type) == 0) {
+         event_type <- "";
+      }
+   }
 
    ## Check if data is already present in the database
    if (verbose) {
       printDebug("save_animal_event_data(): ",
          "animal:", animal,
+         ", channel:", cPaste(colnames(events_m)),
+         ", event:", cPaste(rownames(events_m)),
          ", project:", project,
          ", phase:", phase,
          ", step:", step,
@@ -685,12 +824,43 @@ save_animal_event_data <- function
       event=rownames(events_m),
       event_prestart=event_prestart,
       event_poststop=event_poststop,
+      event_type=event_type,
       return_signal=FALSE,
       ...);
    nrow_expected <- prod(dim(events_m));
    if (length(animevdf) > 0 && nrow(animevdf) > 0) {
       nrow_observed <- nrow(animevdf);
-      if (nrow_observed == nrow_expected) {
+      ## overwrite
+      if (overwrite) {
+         printDebug("save_animal_event_data(): ",
+            "Data exists in database, deleting to overwrite new data.");
+         animevdelete <- DBI::dbGetQuery(con=con, paste0("
+         DELETE FROM
+           ", animal_event_data_table, "
+         WHERE
+           animal = ? and
+           project = ? and
+           phase = ? and
+           channel = ? and
+           event = ? and
+           event_prestart = ? and
+           event_poststop = ? and
+           event_type = ? and
+           step = ?"),
+            param=as.list(
+               unname(
+                  animevdf[,c("animal",
+                     "project",
+                     "phase",
+                     "channel",
+                     "event",
+                     "event_prestart",
+                     "event_poststop",
+                     "event_type",
+                     "step"),drop=FALSE]
+            ))
+         );
+      } else if (nrow_observed == nrow_expected) {
          if (verbose) {
             printDebug("save_animal_event_data(): ",
                "No data was inserted, data for animal '",
@@ -702,6 +872,7 @@ save_animal_event_data <- function
                " rows as expected.",
                fgText=c("orange", "lightgreen"));
          }
+         return(NULL);
       } else {
          printDebug("save_animal_event_data(): ",
             "No data was inserted, data for animal '",
@@ -714,8 +885,8 @@ save_animal_event_data <- function
             nrow_expected,
             " rows were expected.",
             fgText=c("orange", "red"));
+         return(NULL);
       }
-      return(NULL);
    }
 
    ## Convert event signal to serialized "blob"
@@ -735,7 +906,8 @@ save_animal_event_data <- function
       channel=rep(colnames(events_m), each=nrow(events_m)),
       event=rep(rownames(events_m), ncol(events_m)),
       event_prestart=rep(event_prestart, ncell),
-      event_poststop=rep(event_poststop, ncell)
+      event_poststop=rep(event_poststop, ncell),
+      event_type=rep(event_type, ncell),
    );
    event_df$event_signal <- I(event_signal);
 
@@ -762,11 +934,14 @@ save_animal_event_data <- function
    }
 
    ## Insert rows into this table
+   value_fields <- cPaste(
+      paste0(":", colnames(event_df)),
+      sep=", ");
    sql_insert <- paste0("
    INSERT INTO
      ", animal_event_data_table, "
    VALUES
-     (:animal, :project, :phase, :step, :channel, :event, :event_prestart, :event_poststop, :event_signal)");
+     (", value_fields, ")");
    if (!dryrun) {
       if (verbose) {
          printDebug("save_animal_event_data(): ",
@@ -797,10 +972,13 @@ get_animal_event_data <- function
  phase=NULL,
  channel=NULL,
  event=NULL,
+ step=NULL,
  event_prestart=NULL,
  event_poststop=NULL,
+ event_type=NULL,
  animal_event_data_table="animal_event_data",
  return_signal=FALSE,
+ verbose=FALSE,
  ...)
 {
    ## Full data.frame of available animal event data, without event_signal
@@ -810,27 +988,28 @@ get_animal_event_data <- function
          animal_event_data_table);
       return(NULL);
    }
-   animevdf <- DBI::dbGetQuery(con=con, paste0("
-      SELECT
-        animal,
-        project,
-        phase,
-        channel,
-        event,
-        event_prestart,
-        event_poststop,
-        step
-      FROM
-        ", animal_event_data_table));
-
+   if (verbose) {
+      printDebug("get_animal_event_data(): ",
+         "DBI::dbGetQuery() without event_signal.");
+   }
    ## Subset by each provided parameter
    param_names <- c("animal",
       "project",
       "phase",
       "channel",
       "event",
+      "step",
       "event_prestart",
-      "event_poststop");
+      "event_poststop",
+      "event_type");
+
+   animevdf1 <- dplyr::tbl(con, animal_event_data_table) %>%
+      select(param_names);
+
+   if (verbose) {
+      printDebug("get_animal_event_data(): ",
+         "Subsetting by given arguments.");
+   }
    for (param_name in param_names) {
       val <- get(param_name)
       if (length(val) > 0 && nchar(val) > 0) {
@@ -841,19 +1020,25 @@ get_animal_event_data <- function
                ", for values:",
                val);
          }
-         animevdf <- subset(animevdf, animevdf[[param_name]] %in% val);
+         animevdf1 <- animevdf1 %>%
+            filter(.data[[param_name]] %in% val);
       }
    }
+   animevdf <- animevdf1 %>% collect();
 
    if (!return_signal) {
       return(animevdf);
    }
 
-   animevdata <- DBI::dbGetQuery(con=con, "
+   if (verbose) {
+      printDebug("get_animal_event_data(): ",
+         "DBI::dbGetQuery() for event_signal.");
+   }
+   animevdata <- DBI::dbGetQuery(con=con, paste0("
       SELECT
         event_signal
       FROM
-        animal_event_data
+        ", animal_event_data_table, "
       WHERE
         animal = ? and
         project = ? and
@@ -861,7 +1046,9 @@ get_animal_event_data <- function
         channel = ? and
         event = ? and
         event_prestart = ? and
-        event_poststop = ?",
+        event_poststop = ? and
+        event_type = ? and
+        step = ?"),
       param=as.list(
          unname(
             animevdf[,c("animal",
@@ -870,11 +1057,393 @@ get_animal_event_data <- function
                "channel",
                "event",
                "event_prestart",
-               "event_poststop"),drop=FALSE]
-         )
-      ));
+               "event_poststop",
+               "event_type",
+               "step"),drop=FALSE]
+         ))
+      );
+   if (verbose) {
+      printDebug("get_animal_event_data(): ",
+         "unserialize(event_signal)");
+   }
    animevdata1 <- lapply(animevdata[,1], unserialize);
+   ## Confirm attributes are defined in each object
+   attr_names <- c("project",
+      "phase",
+      "step",
+      "animal",
+      "channel",
+      "event",
+      "event_prestart",
+      "event_poststop",
+      "event_type");
+   for (i in seq_along(animevdata1)) {
+      for (attr_name in attr_names) {
+         if (!attr_name %in% names(attributes(animevdata1[[i]]))) {
+            attr(animevdata1[[i]], attr_name) <- animevdf[i,attr_name];
+         }
+      }
+   }
    animevdf$event_signal <- I(animevdata1);
    return(animevdf);
 }
 
+#' Save animal event derived results
+#'
+#' Save animal event derived results
+#'
+#' This function is intended to store result data derived
+#' from animal event data. For example, data returned by
+#' `get_animal_event_data()` is used for some analysis,
+#' after which the results are stored in a database table
+#' for later use.
+#'
+#' @family jam database functions
+#'
+#' @param con database connection with class `DBIConnection`,
+#'    for example produced from `DBI::dbConnect()`. The database
+#'    can be of any type compatible with `DBI`, for example
+#'    `dbConnect(RMySQL::MySQL())` produces an object of
+#'    class `MySQLConnection` which extends `DBIConnection`.
+#' @param animal,project,phase,step,channel,event,event_prestart,event_poststop
+#'    arguments used to identify the unique entry from which
+#'    the event data was derived, equivalent to parameters
+#'    passed to `get_animal_event_data()`.
+#' @param derived_data R object to be stored as a `"blob"` in
+#'    the database table.
+#' @param derived_type character string describing the type
+#'    of data being stored, used in subsequent queries.
+#' @param derived_extra character string intended to describe
+#'    any additional arguments or parameters related to the
+#'    method used to derive results.
+#' @param animal_event_derived_table character string with
+#'    the database table in which to store the derived result
+#'    data.
+#' @param dryrun logical indicating whether to perform database
+#'    operations. Otherwise when `dryrun` is `FALSE`, no database
+#'    operations are performed, including not creating the table
+#'    if it does not exist.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are passed to `get_animal_event_data()`,
+#'    typically used for optional arguments relevant to event data.
+#'
+#' @export
+save_animal_event_derived <- function
+(con,
+ animal,
+ project,
+ phase,
+ step,
+ channel,
+ event,
+ event_prestart,
+ event_poststop,
+ derived_data,
+ derived_type,
+ derived_extra,
+ animal_event_derived_table="animal_event_derived",
+ dryrun=FALSE,
+ verbose=FALSE,
+ ...)
+{
+   #
+   ## Purpose is to store output from import_ephys_mat_1()
+   if (!extends(class(con), "DBIConnection")) {
+      stop("Connection 'con' must extend class 'DBIConnection'.");
+   }
+   if (length(animal) == 0) {
+      animal <- attr(derived_data, "animal");
+      if (length(animal) == 0) {
+         stop("The 'animal' argument must be supplied or be present in attributes(derived_data).");
+      }
+   }
+   if (verbose) {
+      printDebug("save_animal_event_derived(): ",
+         "animal:",
+         animal);
+      printDebug("sdim(derived_data):");
+      print(sdim(derived_data));
+   }
+   if (length(project) == 0 || nchar(project) == 0) {
+      project <- attr(derived_data, "project");
+      if (length(project) == 0 || nchar(project) == 0) {
+         stop(paste0("The 'project' argument must be supplied and must be non-empty, ",
+            "or be present in attributes(derived_data)"));
+      }
+   }
+   if (length(phase) == 0 || nchar(phase) == 0) {
+      phase <- attr(derived_data, "phase");
+      if (length(phase) == 0) {
+         phase <- "";
+      }
+   }
+   if (length(step) == 0) {
+      step <- attr(derived_data, "step");
+      if (length(step) == 0) {
+         stop("The 'step' value must be provided, or present in attr(derived_data, 'step')");
+      }
+   }
+   if (length(event_prestart) == 0) {
+      event_prestart <- attr(derived_data, "event_prestart");
+      if (length(event_prestart) == 0) {
+         stop("event_prestart must be supplied or must be in attributes(derived_data).");
+      }
+   }
+   if (length(event_poststop) == 0) {
+      event_poststop <- attr(derived_data, "event_poststop");
+      if (length(event_poststop) == 0) {
+         stop("event_poststop must be supplied or must be in attributes(derived_data).");
+      }
+   }
+
+   ## Check if data is already present in the database
+   if (verbose) {
+      printDebug("save_animal_event_derived(): ",
+         "animal:", animal,
+         ", project:", project,
+         ", phase:", phase,
+         ", step:", step,
+         ", event_prestart:", event_prestart,
+         ", event_poststop:", event_poststop,
+         ", derived_type:", derived_type,
+         ", derived_extra:", derived_extra);
+   }
+   ## get_animal_event_derived()
+   animevdf <- get_animal_event_derived(con,
+      animal=animal,
+      project=project,
+      phase=phase,
+      step=step,
+      channel=channel,
+      event=event,
+      event_prestart=event_prestart,
+      event_poststop=event_poststop,
+      derived_type=derived_type,
+      derived_extra=derived_extra,
+      return_data=FALSE,
+      ...);
+   nrow_expected <- 1;
+   if (length(animevdf) > 0 && nrow(animevdf) > 0) {
+      nrow_observed <- nrow(animevdf);
+      if (nrow_observed == nrow_expected) {
+         if (verbose) {
+            printDebug("save_animal_event_derived(): ",
+               "No data was inserted, data for animal '",
+               animal,
+               "' already exists in table '",
+               animal_event_data_table,
+               "' with ",
+               nrow_expected,
+               " rows as expected.",
+               fgText=c("orange", "lightgreen"));
+         }
+      } else {
+         printDebug("save_animal_event_derived(): ",
+            "No data was inserted, data for animal '",
+            animal,
+            "' already exists in table '",
+            animal_event_data_table,
+            "' with ",
+            nrow_observed,
+            " rows, but ",
+            nrow_expected,
+            " rows were expected.",
+            fgText=c("orange", "red"));
+      }
+      return(NULL);
+   }
+
+   ## Convert event derived_data to serialized "blob"
+   derived_blob <- list(serialize(derived_data,
+      connection=NULL,
+      ascii=TRUE));
+
+   ## Write to table
+   derived_df <- data.frame(
+      animal=animal,
+      project=project,
+      phase=phase,
+      step=step,
+      channel=channel,
+      event=event,
+      event_prestart=event_prestart,
+      event_poststop=event_poststop,
+      derived_type=derived_type,
+      derived_extra=derived_extra,
+      derived_data=I(derived_blob)
+   );
+   if (verbose) {
+      printDebug("save_animal_event_derived(): ",
+         "tibble(derived_df):");
+      print(tibble::tibble(derived_df));
+   }
+
+   ## Check that the database table exists
+   if (!DBI::dbExistsTable(con, animal_event_derived_table)) {
+      if (verbose) {
+         printDebug("save_animal_event_derived(): ",
+            "Creating database table:",
+            animal_event_derived_table);
+      }
+      if (!dryrun) {
+         DBI::dbCreateTable(con=con,
+            name=animal_event_derived_table,
+            fields=derived_df[0,,drop=FALSE]);
+      } else if (verbose) {
+         printDebug("save_animal_event_derived(): ",
+            "Skipping table creation due to ",
+            "dryrun=",
+            dryrun,
+            fgText=c("orange", "red"));
+      }
+   }
+
+   ## Insert rows into this table
+   sql_insert <- paste0("
+      INSERT INTO
+      ", animal_event_derived_table, "
+      VALUES
+      (:animal, :project, :phase, :step, :channel, :event,
+       :event_prestart, :event_poststop,
+       :derived_type, :derived_extra, :derived_data)");
+   if (!dryrun) {
+      if (verbose) {
+         printDebug("save_animal_event_derived(): ",
+            "Inserting rows.");
+      }
+      res2 <- DBI::dbExecute(con,
+         sql_insert,
+         param=derived_df);
+   } else {
+      printDebug("save_animal_event_derived(): ",
+         "Skipping insert due to ",
+         "dryrun=",
+         dryrun,
+         fgText=c("orange", "red"));
+   }
+}
+
+#' Get animal event derived data
+#'
+#' Get animal event derived data
+#'
+#' This function returns data stored by `save_animal_event_derived()`
+#' from a relational database. The derived data is returned
+#' when argument `return_data=TRUE`, in the form of a `list` column
+#' of a `data.frame`.
+#'
+#' @family jam database functions
+#'
+#' @param con database connection with class `DBIConnection`,
+#'    for example produced from `DBI::dbConnect()`. The database
+#'    can be of any type compatible with `DBI`, for example
+#'    `dbConnect(RMySQL::MySQL())` produces an object of
+#'    class `MySQLConnection` which extends `DBIConnection`.
+#' @param animal,project,phase,step,channel,event,event_prestart,event_poststop
+#'    arguments used to identify the unique entry from which
+#'    the event data was derived, equivalent to parameters
+#'    passed to `get_animal_event_data()`.
+#' @param derived_type character string describing the type
+#'    of data being stored, used in subsequent queries.
+#' @param derived_extra character string intended to describe
+#'    any additional arguments or parameters related to the
+#'    method used to derive results.
+#' @param animal_event_derived_table character string with
+#'    the database table in which to store the derived result
+#'    data.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are ignored.
+#'
+#' @export
+get_animal_event_derived <- function
+(con,
+ animal=NULL,
+ project=NULL,
+ phase=NULL,
+ step=NULL,
+ channel=NULL,
+ event=NULL,
+ event_prestart=NULL,
+ event_poststop=NULL,
+ derived_type=NULL,
+ derived_extra=NULL,
+ animal_event_derived_table="animal_event_derived",
+ return_data=FALSE,
+ verbose=FALSE,
+ ...)
+{
+   ## Full data.frame of available animal event data, without event_signal
+   if (!DBI::dbExistsTable(con=con, animal_event_derived_table)) {
+      printDebug("get_animal_event_data(): ",
+         "Table does not exist:",
+         animal_event_derived_table);
+      return(NULL);
+   }
+   ## Subset by each provided parameter
+   param_names <- c("animal",
+      "project",
+      "phase",
+      "step",
+      "channel",
+      "event",
+      "event_prestart",
+      "event_poststop",
+      "derived_type",
+      "derived_extra");
+   animevdf1 <- dplyr::tbl(con, animal_event_derived_table) %>%
+      select(param_names);
+
+   for (param_name in param_names) {
+      val <- get(param_name)
+      if (length(val) > 0 && nchar(val) > 0) {
+         if (verbose) {
+            printDebug("get_animal_event_derived(): ",
+               "filtering on ",
+               param_name,
+               ", for values:",
+               val);
+         }
+         animevdf1 <- animevdf1 %>%
+            filter(.data[[param_name]] %in% val);
+      }
+   }
+   animevdf <- animevdf1 %>% collect();
+
+   if (!return_data) {
+      return(animevdf);
+   }
+
+   animevdata <- DBI::dbGetQuery(con=con, paste0("
+      SELECT
+        derived_data
+      FROM
+        ", animal_event_derived_table, "
+      WHERE
+        animal = ? and
+        project = ? and
+        phase = ? and
+        step = ? and
+        channel = ? and
+        event = ? and
+        event_prestart = ? and
+        event_poststop = ? and
+        derived_type = ? and
+        derived_extra = ?"),
+      param=as.list(
+         unname(
+            animevdf[,c("animal",
+               "project",
+               "phase",
+               "step",
+               "channel",
+               "event",
+               "event_prestart",
+               "event_poststop",
+               "derived_type",
+               "derived_extra"),drop=FALSE]
+         )
+      ));
+   derived_data <- lapply(animevdata[,1], unserialize);
+   animevdf$derived_data <- I(derived_data);
+   return(tibble::as.tibble(animevdf));
+}

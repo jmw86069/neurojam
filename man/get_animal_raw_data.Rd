@@ -7,7 +7,8 @@
 get_animal_raw_data(con, animal = NULL, project = NULL, phase = NULL,
   source_filename = NULL, source_dirname = NULL,
   rdata_filename = NULL, rdata_dirname = NULL,
-  animal_raw_data_table = "animal_raw_data", return_rdata = FALSE,
+  animal_raw_data_table = "animal_raw_data",
+  channel_grep = "^AI[0-9]+$|^FP[0-9]+", return_rdata = FALSE,
   verbose = FALSE, ...)
 }
 \description{
@@ -17,7 +18,9 @@ Save raw signal data per animal
 Other jam database functions: \code{\link{ephys_short_name}},
   \code{\link{extract_event_data}},
   \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_event_derived}},
   \code{\link{save_animal_event_data}},
+  \code{\link{save_animal_event_derived}},
   \code{\link{save_animal_raw_data}}
 }
 \concept{jam database functions}

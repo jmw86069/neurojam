@@ -7,7 +7,8 @@
 calc_ephys_wavelet(x, iWt = NULL, return_type = c("wt", "m", "list"),
   type = c("power.corr.norm", "power", "power.corr", "power.norm",
   "wavelet", "phase"), x_condense_factor = 10, x_label_multiple = 5,
-  i_step = 0.001, m = NULL, do.sig = FALSE, verbose = FALSE, ...)
+  step = 0.001, m = NULL, dj = 1/6, s0 = i_step * 5,
+  mother = "morlet", do.sig = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{numeric matrix with two columns, where the first column

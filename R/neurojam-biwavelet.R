@@ -87,8 +87,11 @@ calc_ephys_wavelet <- function
     "power.corr", "power.norm", "wavelet", "phase"),
  x_condense_factor=10,
  x_label_multiple=5,
- i_step=0.001,
+ step=0.001,
  m=NULL,
+ dj=1/6,
+ s0=i_step*5,
+ mother="morlet",
  do.sig=FALSE,
  verbose=FALSE,
  ...)
@@ -108,21 +111,25 @@ calc_ephys_wavelet <- function
       }
       if (length(dim(x)) == 0 || ncol(x) == 1) {
          if ("label_start" %in% names(attributes(x))) {
-            label_start <- attr(x, "label_start") * i_step;
+            label_start <- attr(x, "label_start") * step;
          } else {
             label_start <- 0;
          }
          x <- cbind(x,
-            seq(from=i_step - label_start,
-               by=i_step,
+            seq(from=step - label_start,
+               by=step,
                length.out=length(x)));
       }
-      if (verbose) {
+      if (1 == 2 && verbose) {
          printDebug("calc_ephys_wavelet(): ",
             "head(cbind(x[,2], x[,1])):");
          print(head(cbind(x[,2], x[,1])));
       }
       iWt <- wt(cbind(x[,2], x[,1]),
+         dj=dj,
+         dt=step,
+         s0=s0,
+         mother=mother,
          do.sig=do.sig,
          ...);
    }
@@ -497,77 +504,853 @@ m=NULL,
    invisible(iWt);
 }
 
-#' Event to frequency profile
+#' Calculate animal event frequency profile
+#'
+#' Calculate animal event frequency profile
+#'
+#' This function takes event signal data, and calculates
+#' a frequency matrix, with frequency period rows, and time
+#' columns, the result of `calc_ephys_wavelet()` which in turn
+#' calls `biwavelet::wt()` wavelet transform. By default it
+#' returns the power-corrected frequency `"power.corr"`.
+#'
+#' When `con` is provided as a `DBI` database connection,
+#' data is stored in a relational database table using
+#' `save_animal_event_derived()`. It will first check if the
+#' data already exists in the database, and if so it
+#' will return the database result.
+#'
+#' @param eventsm numeric matrix whose first column contains
+#'    raw signal data for the event to be analyzed. It may optionally
+#'    contain a second column with time stamp, assumed to be
+#'    in units of seconds, or consistent units with the `"step"`
+#'    value.
+#'    Some attributes are required to be present in `eventsm`:
+#'    `"event_prestart"`, `"event_poststop"` contain the number
+#'    of time steps before the event start, and after the event
+#'    stop, respectively. Practically, this adjustment allows
+#'    calculating a proper `zero` time point, and to indicate
+#'    when the official event duration ends.
+#'    `eventsm` can also be a list, in which case all arguments
+#'    `animal,step,channel,project,phase,event_prestart,event_poststop`
+#'    are required to be present as attributes of each item in the
+#'    list.
+#' @param step,animal,channel,event,project,phase,event_prestart,event_poststop
+#'    arguments that describe the source of the event data.
+#' @param pre_bin_n,time_bin_n,post_bin_n integer values indicating
+#'    the number of bins to sub-divide each time window:
+#'    `pre_bin_n` divides the pre-event signal into this many bins;
+#'    `time_bin_n` divides the event signal into this many bins;
+#'    `post_bin_n` divides the post-event signal into this many bins.
+#' @param pre_bin_labels,time_bin_labels,post_bin_labels character
+#'    string or vector indicating how to many the bins for each
+#'    time window, when any of `pre_bin_n,time_bin_n,post_bin_n`
+#'    are greater than 1. The character string is extended to the
+#'    appropriate length, then make unique with
+#'    `jamba::makeNames(..., suffix="_")`.
+#' @param new_step numeric value indicating the new time step
+#'    size to store, which effectively reduces the data to this
+#'    time unit per output column. For example, `new_step=0.1`
+#'    will store data in increments of 0.1 seconds. Data is
+#'    condensed using `condense_freq_matrix()`.
+#' @param x_condense_factor numeric value calculated using
+#'    `new_step/step`. Using `new_step` allows condensing
+#'    data to a fixed time step, instead of condensing data
+#'    by a fixed factor which is applied regardless the time step.
+#' @param dj,s0,mother,do.sig arguments passed to `calc_ephys_wavelet()`
+#'    which ultimately passes those arguments to `biwavelet::wt()`.
+#' @param freq_range numeric vector indicating the range of frequencies
+#'    to include in the output data.
+#' @param freq_step numeric value indicating the frequency step, used
+#'    to create a sequence of frequencies across the range defined
+#'    by `freq_range`.
+#' @param freq_method string indicating which frequency method to use
+#'    when determining intermediate frequency values: `"1"` chooses the
+#'    closest available frequency returned by `biwavelet::wt()`;
+#'    `"2"` performs linear interpolation and returns the value
+#'    returned from `stats::approx()`.
+#' @param adj_freq_range numeric range for which adjusted frequency
+#'    values should be calculated. The method subtracts the mean
+#'    frequency across this range from the total frequency profile.
+#' @param return_type character string indicating the output format:
+#'    `"profile"` returns only the frequency profile for each time
+#'    bin; `"list"` returns a list containing the frequency profile,
+#'    and the full frequency-time matrix returned from `biwavelet::wt()`
+#'    after also calling `condense_freq_matrix()`.
+#' @param animal_event_derived_table character string indicating the
+#'    name of the database table that contains derived event data,
+#'    where the results of this function will store data. If the
+#'    requested data is already present in the database, it will be
+#'    retrieved directly instead of re-calculating results.
+#' @param useMedian logical indicating whether to use median instead
+#'    of mean value when calculating the adjusted frequency.
+#' @param dryrun logical indicating whether to perform a dry-run
+#'    without performing calculations, and without storing results
+#'    in the datbase.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are passed to downstream functions.
 #'
 #' @export
 event_freq_profile <- function
-(events_m_1,
- i_step=0.001,
- animal,
- event,
- channel,
+(eventsm,
+ step=NULL,
+ animal=NULL,
+ channel=NULL,
+ event=NULL,
+ project=NULL,
+ phase=NULL,
+ event_prestart=NULL,
+ event_poststop=NULL,
+ pre_bin_n=1,
  time_bin_n=2,
+ post_bin_n=1,
+ pre_bin_labels="pre",
  time_bin_labels=c("tone", "trace"),
+ post_bin_labels="post",
+ new_step=0.1,
+ x_condense_factor=new_step/step,
+ dj=1/6,
+ s0_factor=5,
+ s0=step*s0_factor,
+ mother="morlet",
+ do.sig=FALSE,
+ freq_range=c(1, 20),
+ freq_step=0.2,
+ freq_method=c("2"),
+ adj_freq_range=c(3, 5),
  return_type=c("profile", "list"),
+ con=NULL,
+ animal_event_derived_table="animal_event_derived",
+ useMedian=FALSE,
+ dryrun=FALSE,
  verbose=FALSE,
  ...)
 {
    return_type <- match.arg(return_type);
+
+   ## Check if input eventsm is a list
+   if (is.list(eventsm)) {
+      attr_names <- c("animal", "channel", "event", "project", "phase",
+         "event_prestart", "event_poststop", "step");
+      if (!all(attr_names %in% names(attributes(eventsm[[1]])))) {
+         stop(paste0("When eventsm is a list, each element must contain all attributes: ",
+            jamba::cPaste(attr_names)));
+      }
+      if (verbose) {
+         jamba::printDebug("event_freq_profile(): ",
+            "Processing ", "eventsm", " as a list");
+      }
+      freq_l <- lapply(eventsm, function(i_eventsm){
+         printDebug("event_freq_profile(): ",
+            "calling event_freq_profile for animal:",
+            attr(i_eventsm, "animal"),
+            ", channel:",
+            attr(i_eventsm, "channel"),
+            ", event:",
+            attr(i_eventsm, "event"));
+         event_freq_profile(i_eventsm,
+            pre_bin_n=pre_bin_n,
+            time_bin_n=time_bin_n,
+            post_bin_n=post_bin_n,
+            pre_bin_labels=pre_bin_labels,
+            time_bin_labels=time_bin_labels,
+            post_bin_labels=post_bin_labels,
+            new_step=new_step,
+            dj=dj,
+            s0_factor=s0_factor,
+            s0=NULL,
+            mother=mother,
+            do.sig=do.sig,
+            freq_range=freq_range,
+            freq_method=freq_method,
+            adj_freq_range=adj_freq_range,
+            return_type=return_type,
+            con=con,
+            animal_event_derived_table=animal_event_derived_table,
+            useMedian=useMedian,
+            dryrun=dryrun,
+            verbose=verbose)
+      });
+      return(freq_l);
+   }
+
+   ## Determine if arguments are supplied, or found in attributes(eventsm)
+   if (length(animal) == 0 && "animal" %in% names(attributes(eventsm))) {
+      animal <- attr(eventsm, "animal");
+   }
+   if (length(channel) == 0 && "channel" %in% names(attributes(eventsm))) {
+      channel <- attr(eventsm, "channel");
+   }
+   if (length(event) == 0 && "event" %in% names(attributes(eventsm))) {
+      event <- attr(eventsm, "event");
+   }
+   if (length(project) == 0 && "project" %in% names(attributes(eventsm))) {
+      project <- attr(eventsm, "project");
+   }
+   if (length(phase) == 0 && "phase" %in% names(attributes(eventsm))) {
+      phase <- attr(eventsm, "phase");
+   }
+   if (length(event_prestart) == 0 && "event_prestart" %in% names(attributes(eventsm))) {
+      event_prestart <- attr(eventsm, "event_prestart");
+   }
+   if (length(event_poststop) == 0 && "event_poststop" %in% names(attributes(eventsm))) {
+      event_poststop <- attr(eventsm, "event_poststop");
+   }
+   if (length(step) == 0 && "step" %in% names(attributes(eventsm))) {
+      step <- attr(eventsm, "step");
+   }
+   if (verbose) {
+      printDebug("event_freq_profile(): ",
+         "animal:", animal,
+         ", channel:", channel,
+         ", event:", event,
+         ", project:", project,
+         ", phase:", phase,
+         ", event_prestart:", event_prestart,
+         ", event_poststop:", event_poststop,
+         ", step:", step);
+   }
+   if (length(c(animal, channel, event, project, phase, event_prestart, event_poststop, step)) < 8) {
+      stop(paste0(
+         "All values must be supplied or present in attributes(eventsm):\n",
+         "animal, channel, event, project, phase, event_prestart, event_poststop, step"));
+   }
+
+   if (length(s0) == 0) {
+      s0 <- s0_factor * step;
+   }
+   derived_extra <- paste0(
+      "step=", step,
+      ", dj=", dj,
+      ", s0=", s0,
+      ", mother=", mother,
+      ", new_step=", new_step);
+   derived_type <- "freq_profile";
+
+   if (length(con) > 0) {
+      ## When given a database connection, store results in the
+      ## database when the data does not already exist
+      if (!extends(class(con), "DBIConnection")) {
+         stop("Connection 'con' must extend class 'DBIConnection'.");
+      }
+      ## Check for pre-existing data
+      if (verbose) {
+         printDebug("event_freq_profile(): ",
+            "Checking for previously stored data.");
+      }
+      animevdf <- get_animal_event_derived(con=con,
+         animal=animal,
+         event=event,
+         channel=channel,
+         step=step,
+         project=project,
+         phase=phase,
+         event_prestart=event_prestart,
+         event_poststop=event_poststop,
+         derived_type=derived_type,
+         derived_extra=derived_extra,
+         return_data=FALSE);
+      if (length(animevdf) > 0 && nrow(animevdf) > 0) {
+         ## Data already exists, retrieve and return
+         if (verbose) {
+            printDebug("event_freq_profile(): ",
+               "Returning previously stored data. nrow(animevdf):",
+               nrow(animevdf));
+         }
+         animevdf <- get_animal_event_derived(con=con,
+            animal=animal,
+            event=event,
+            channel=channel,
+            step=step,
+            project=project,
+            phase=phase,
+            event_prestart=event_prestart,
+            event_poststop=event_poststop,
+            derived_type=derived_type,
+            derived_extra=derived_extra,
+            return_data=TRUE);
+         return(animevdf$derived_data[[1]]);
+      }
+   }
+
+   ## Calculate post_time
+   post_time <- event_poststop * step;
+   pre_time <- event_prestart * step;
+
    if (verbose) {
       printDebug("event_freq_profile: ",
          "calc_ephys_wavelet() started");
    }
-   i_m <- calc_ephys_wavelet(x=events_m_1,
+   i_m <- calc_ephys_wavelet(x=eventsm,
       return_type="m",
       type="power.corr",
-      x_condense_factor=100,
-      i_step=i_step);
+      x_condense_factor=x_condense_factor,
+      step=step,
+      dj=dj,
+      s0=s0,
+      mother=mother,
+      do.sig=do.sig,
+      verbose=verbose);
    if (verbose) {
       printDebug("event_freq_profile: ",
          "calc_ephys_wavelet() complete");
    }
 
-   iM2 <- i_m;
-   iM2period <- as.numeric(rownames(iM2));
-   iM2hz <- 1/iM2period;
-   rownames(iM2) <- rev(iM2hz);
-   #heatmap.3(log2(iM2), Colv=FALSE, Rowv=FALSE, useRaster=TRUE, labCol=NA);
+   ## Convert matrix with period units to frequency in hertz
+   iM2normal <- matrix_period2hz(i_m,
+      freq_method=freq_method,
+      freq_range=freq_range,
+      freq_step=freq_step,
+      verbose=verbose);
 
-   ## Convert log-scaled frequency to normal scale
-   freq_seq <- seq(from=0.9, to=20, by=0.2);
-   x2i <- closest_value(log2(freq_seq), log2(iM2hz), value=FALSE);
-   iM2normal <- rbindList(lapply(head(seq_along(x2i), -1), function(i){
-      irows <- seq(from=x2i[i], to=x2i[i+1]);
-      colMeans(iM2[irows,,drop=FALSE]);
-   }));
-   freq_bins <- head(freq_seq, -1) + diff(freq_seq)/2;
-   rownames(iM2normal) <- freq_bins;
+   ## Summarize data by time bins
+   cut_m <- summarize_event_bins(log2(1+iM2normal),
+      pre_time=pre_time,
+      post_time=post_time,
+      pre_bin_n=pre_bin_n,
+      time_bin_n=time_bin_n,
+      post_bin_n=post_bin_n,
+      pre_bin_labels=pre_bin_labels,
+      time_bin_labels=time_bin_labels,
+      post_bin_labels=post_bin_labels,
+      useMedian=useMedian,
+      verbose=verbose,
+      ...);
 
-   time_bin_cuts <- seq(from=0, to=39, length.out=time_bin_n + 1);
-   time_bin_labels <- makeNames(rep(time_bin_labels, length.out=time_bin_n));
-   cut_breaks <- c(-Inf, time_bin_cuts, Inf);
-   cut_labels <- c("pre", time_bin_labels, "post");
-
+   ## Create time bins using colnames as time
+   i_time <- as.numeric(colnames(i_m));
+   cut_time_breaks <- sort(
+      unique(
+         c(-pre_time,
+            0,
+            max(i_time)-post_time,
+            max(i_time))));
+   #cut(i_time,
+   #   breaks=cut_time_breaks,
+   #   include.lowest=TRUE);
+   max_time <- max(i_time, na.rm=TRUE);
+   if (pre_time == 0 && min(i_time, na.rm=TRUE) < 0) {
+      pre_time <- min(i_time, na.rm=TRUE);
+   }
+   if (pre_time == 0) {
+      pre_bin_n <- 0;
+   }
+   if (post_time == 0) {
+      post_bin_n <- 0;
+   } else if (post_bin_n == 0) {
+      post_bin_n <- 1;
+   }
+   pre_bin_cuts <- head(unique(seq(from=-pre_time, to=0, length.out=pre_bin_n+1)), -1);
+   time_bin_cuts <- seq(from=0, to=max_time-post_time, length.out=time_bin_n + 1);
+   post_bin_cuts <- tail(seq(from=max_time-post_time, to=max_time, length.out=post_bin_n + 1), -1);
+   time_breaks <- sort(unique(c(pre_bin_cuts, time_bin_cuts, post_bin_cuts)));
+   if (length(time_bin_labels) == 0) {
+      time_bin_labels <- "event";
+   }
+   time_labels <- makeNames(c(rep("pre", length(pre_bin_cuts)),
+      rep(time_bin_labels, length.out=time_bin_n),
+      rep("post", length(post_bin_cuts))));
+   time_cuts <- cut(i_time,
+      breaks=time_breaks,
+      labels=time_labels,
+      include.lowest=TRUE);
    col_sets <- split(colnames(iM2normal),
-      cut(as.numeric(colnames(iM2normal)),
-         breaks=cut_breaks,
-         labels=cut_labels));
-   par("mfrow"=c(3,1));
-   cut_m <- do.call(cbind, lapply(col_sets, function(i){
-      rowMeans(log2(iM2normal[,i]));
-   }));
+      time_cuts);
+   col_groups <- nameVector(
+      rep(names(col_sets), lengths(col_sets)),
+      unlist(col_sets)
+   );
+   cut_m <- jamba::rowGroupMeans(log2(1+iM2normal),
+      groups=col_groups,
+      useMedian=FALSE,
+      ...);
+
    cut_df <- data.frame(freq=as.numeric(rownames(cut_m)), cut_m);
-   cut_tall <- tidyr::gather(cut_df, "time_bin", "value", -freq, factor_key=TRUE);
-   value_baseline <- median(subset(cut_tall, freq < 5)$value);
-   cut_tall$adj_value <- cut_tall$value - value_baseline;
+   cut_tall <- tidyr::gather(cut_df,
+      "time_bin", "value",
+      -freq,
+      factor_key=TRUE);
+   if (length(adj_freq_range) > 0) {
+      value_baselines <- subset(cut_tall,
+            freq >= min(adj_freq_range) & freq <= max(adj_freq_range))$value;
+      if (useMedian) {
+         value_baseline <- median(value_baselines);
+      } else {
+         value_baseline <- mean(value_baselines);
+      }
+      cut_tall$value_baseline <- value_baseline;
+      cut_tall$adj_value <- cut_tall$value - cut_tall$value_baseline;
+   }
    cut_tall$animal <- animal;
    cut_tall$event <- event;
    cut_tall$channel <- channel;
+   ret_vals <- list();
+   ret_vals$i_m <- i_m;
+   ret_vals$cut_tall <- cut_tall;
+
+   ## Optionally store results in database
+   if (length(con) > 0) {
+      if (length(ret_vals) > 0) {
+         if (verbose) {
+            printDebug("event_freq_profile(): ",
+               "Saving into database via save_animal_event_derived()");
+         }
+         save_animal_event_derived(con=con,
+            animal=animal,
+            project=project,
+            phase=phase,
+            step=step,
+            channel=channel,
+            event=event,
+            event_prestart=event_prestart,
+            event_poststop=event_poststop,
+            derived_data=ret_vals,
+            derived_type=derived_type,
+            derived_extra=derived_extra,
+            animal_event_derived_table=animal_event_derived_table,
+            dryrun=dryrun,
+            verbose=verbose);
+      }
+   }
    if ("list" %in% return_type) {
-      ret_vals <- list();
-      ret_vals$i_m <- i_m;
-      ret_vals$cut_tall <- cut_tall;
       return(ret_vals);
    }
+
    return(cut_tall);
 }
+
+#' Convert matrix scale from period to Hertz units
+#'
+#' Convert matrix scale from period to Hertz units
+#'
+#' This function converts a numeric matrix whose rows are
+#' in units of period, number of seconds per observation,
+#' into units of Hertz, number of observations per second.
+#' It also makes the Hertz scale linear by using linear
+#' interpolation between actual period measurement values,
+#' via the `stats::approx()` function.
+#'
+#' The period values are expected to be `rownames(x)`,
+#' which are converted to numeric with `as.numeric(rownames(x))`.
+#' Otherwise the argument `row_values` can be used to supply
+#' a numeric vector.
+#'
+#' @return numeric matrix whose rows are in units of frequency
+#'    in Hertz, observations per second. An attribute `"row_values"`
+#'    contains a numeric vector for each row.
+#'
+#' @export
+matrix_period2hz <- function
+(x,
+ row_values=NULL,
+ freq_range=c(1, 20),
+ freq_step=0.2,
+ freq_method=c("2"),
+ do_rev=FALSE,
+ verbose=FALSE,
+ ...)
+{
+   #
+   if (length(x) == 0) {
+      return(x);
+   }
+   iM2 <- x;
+   if (length(row_values) > 0) {
+      if (length(row_values) != nrow(x)) {
+         stop("The length(row_values) must equal nrow(x).");
+      }
+      if (!is.numeric(row_values)) {
+         stop("row_values must be a numeric vector.");
+      }
+   } else {
+      if (length(rownames(iM2)) == 0) {
+         stop("When row_values is not supplied, there must be rownames(x).");
+      }
+      row_values <- as.numeric(rownames(iM2));
+   }
+   ## Convert to Hertz
+   iM2hz <- 1/row_values;
+   if (do_rev) {
+      if (verbose) {
+         printDebug("matrix_period2hz(): ",
+            "do_rev:",
+            do_rev);
+      }
+      iM2hz <- rev(iM2hz);
+   }
+   #rownames(iM2) <- rev(iM2hz);
+   #ComplexHeatmap::Heatmap(log2(iM2), cluster_columns=FALSE, cluster_rows=FALSE, use_raster=TRUE, column_labels=rep("", ncol(iM2)));
+
+   ## Convert to linear scale
+   freq_seq <- seq(from=min(freq_range),
+      to=max(freq_range),
+      by=freq_step);
+
+   ## Custom function
+   closest_value <- function
+   (x,
+    y,
+    value=TRUE,
+    ...)
+   {
+      x_y <- sapply(x, function(i){
+         idiff <- abs(i - y)
+         if (value) {
+            y[which.min(idiff)];
+         } else {
+            which.min(idiff);
+         }
+      });
+      x_y;
+   }
+
+   ## Two approaches
+   if (length(freq_method) > 0 && "1" %in% freq_method) {
+      if (verbose) {
+         printDebug("matrix_period2hz(): ",
+            "closest value method");
+      }
+      ## Method: find closest row to target frequency, use values in that row
+      freq_seq <- seq(from=min(freq_range) - freq_step/2,
+         to=max(freq_range) + freq_step/2,
+         by=freq_step);
+      x2i <- closest_value(log2(freq_seq), log2(iM2hz), value=FALSE);
+      iM2normal <- rbindList(lapply(head(seq_along(x2i), -1), function(i){
+         irows <- seq(from=x2i[i], to=x2i[i+1]);
+         colMeans(iM2[irows,,drop=FALSE]);
+      }));
+      freq_bins <- head(freq_seq, -1) + diff(freq_seq)/2;
+      rownames(iM2normal) <- freq_bins;
+      attr(iM2normal, "row_values") <- freq_bins;
+   } else {
+      if (verbose) {
+         printDebug("matrix_period2hz(): ",
+            "linear interpolation method");
+      }
+      ## Alternative method:
+      ## For each data column use approx() to define the actual
+      ## frequency/value relationship, then use linear
+      ## interpolation to obtain intermediate frequencies.
+      iM2normal <- apply(iM2, 2, function(i){
+         nameVector(
+            approx(x=log2(iM2hz),
+               y=i,
+               xout=log2(freq_seq))$y,
+            freq_seq);
+      });
+      rownames(iM2normal) <- freq_seq;
+      attr(iM2normal, "row_values") <- freq_seq;
+   }
+   return(iM2normal);
+}
+
+#' Summarize event bins for a numeric matrix
+#'
+#' Summarize event bins for a numeric matrix
+#'
+#' This function is intended to summarize event data stored
+#' in a numeric matrix with time columns, based upon
+#' pre-event, event, and post-event sections. Each section
+#' can be subdivided into `n` parts, using arguments
+#' `pre_bin_n`, `time_bin_n`, and `post_bin_n`, respectively.
+#'
+#' Note that the input numeric matrix `x` should already
+#' be transformed appropriate for summarization. For example,
+#' if `log2` transformation is required, it should be done
+#' before calling this function.
+#'
+#' @return numeric `matrix` whose colnames are the event bins
+#'    after being sub-divided, when `make_tall=FALSE`. When
+#'    `make_tall=TRUE` the data is returned as a `data.frame`
+#'    with each row containing one frequency in column
+#'    `"value"`.
+#'
+#' @param x numeric matrix whose `colnames(x)` represent time.
+#' @param pre_time numeric value indicating the time before the
+#'    event occurs. By default, the event is assumed to occur
+#'    at time=0, so the lowest negative value is used to
+#'    derive `pre_time`.
+#' @param post_time numeric value indicating the time added
+#'    to the end of the event, used as a post-event duration.
+#' @param pre_bin_n,time_bin_n,post_bin_n integer number of bins
+#'    used to sub-divide each section, for pre-event, event,
+#'    and post-event, respectively.
+#' @param pre_bin_labels character vector used to label the
+#'    pre-event bin sections, expanded to the number of pre-event bins.
+#' @param time_bin_labels character vector used to label the
+#'    event bin sections, expanded to the number of event bins.
+#' @param time_bin_labels character vector used to label the
+#'    post-event bin sections, expanded to the number of post-event bins.
+#' @param useMedian logical passed to `jamba::rowGroupMeans()`
+#'    indicating whether to use the row median value to summarize
+#'    each bin.
+#' @param make_tall logical indicating whether to convert data
+#'    to tall `data.frame` format. When `make_tall=FALSE` the
+#'    data is returned as a numeric matrix.
+#' @param adj_freq_range numeric range of frequencies to use
+#'    as a baseline, which is subtracted from the resulting
+#'    profile for each time bin. This subtraction is only
+#'    applied when `make_tall=TRUE`, and
+#'    `length(adj_freq_range) > 0`.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are ignored.
+#'
+#' @export
+summarize_event_bins <- function
+(x,
+ col_values=NULL,
+ pre_time=0,
+ post_time=0,
+ pre_bin_n=1,
+ time_bin_n=2,
+ post_bin_n=1,
+ pre_bin_labels="pre",
+ time_bin_labels=c("tone", "trace"),
+ post_bin_labels="post",
+ useMedian=FALSE,
+ make_tall=FALSE,
+ adj_freq_range=c(3, 5),
+ verbose=FALSE,
+ ...)
+{
+   #
+   ## Create time bins using colnames as time
+   if (length(col_values) == 0) {
+      i_time <- as.numeric(colnames(x));
+   } else {
+      i_time <- as.numeric(col_values);
+      if (length(colnames(x)) == 0) {
+         colnames(x) <- as.character(col_values);
+      }
+   }
+
+   max_time <- max(i_time, na.rm=TRUE);
+   min_time <- min(i_time, na.rm=TRUE);
+   if (pre_time == 0 && min_time < 0) {
+      pre_time <- abs(min_time);
+   }
+   if (pre_time == 0) {
+      pre_bin_n <- 0;
+   }
+   if (post_time == 0) {
+      post_bin_n <- 0;
+   } else if (post_bin_n == 0) {
+      post_bin_n <- 1;
+   }
+   pre_bin_cuts <- head(
+      unique(
+         seq(from=min_time,
+            to=min_time + pre_time,
+            length.out=pre_bin_n+1)
+      ), -1);
+   time_bin_cuts <- unique(
+      seq(from=min_time + pre_time,
+         to=max_time - post_time,
+         length.out=time_bin_n + 1));
+   post_bin_cuts <- tail(
+      unique(
+         seq(from=max_time - post_time,
+            to=max_time,
+            length.out=post_bin_n + 1)
+      ), -1);
+   time_breaks <- sort(unique(
+      c(pre_bin_cuts,
+         time_bin_cuts,
+         post_bin_cuts)));
+   if (length(time_bin_labels) == 0) {
+      time_bin_labels <- "event";
+   }
+   time_labels <- makeNames(
+      c(
+         rep(pre_bin_labels,
+            length.out=length(pre_bin_cuts)),
+         rep(time_bin_labels,
+            length.out=length(time_bin_cuts)-1),
+         rep(post_bin_labels,
+            length.out=length(post_bin_cuts))
+      ));
+   if (verbose) {
+      printDebug("summarize_event_bins(): ",
+         "time_breaks:",
+         time_breaks);
+      printDebug("summarize_event_bins(): ",
+         "time_labels:",
+         time_labels);
+      time_bins <- paste0(format(digits=3, trim=TRUE, head(time_breaks, -1)),
+         " .. ",
+         format(digits=3, trim=TRUE, tail(time_breaks, -1)));
+      print(data.frame(time_bins, time_labels));
+   }
+   time_cuts <- cut(i_time,
+      breaks=time_breaks,
+      labels=time_labels,
+      include.lowest=TRUE);
+   col_sets <- split(colnames(x),
+      time_cuts);
+   col_groups <- nameVector(
+      rep(names(col_sets), lengths(col_sets)),
+      unlist(col_sets)
+   );
+   if (verbose) {
+      printDebug("summarize_event_bins(): ",
+         "sdim(col_sets):");
+      print(jamba::sdim(col_sets));
+      printDebug("summarize_event_bins(): ",
+         "observed time_cuts:");
+      print(splicejam::shrinkMatrix(matrix(i_time, ncol=1),
+         groupBy=time_cuts,
+         shrinkFunc=function(x){
+            cPaste(format(digits=3, trim=TRUE, range(x)), sep=" .. ")
+         }));
+   }
+   cut_m <- jamba::rowGroupMeans(x,
+      groups=col_groups,
+      useMedian=useMedian,
+      ...);
+   if (make_tall) {
+      cut_df <- data.frame(freq=as.numeric(rownames(cut_m)), cut_m);
+      cut_tall <- tidyr::gather(cut_df,
+         "time_bin", "value",
+         -freq,
+         factor_key=TRUE);
+      if (length(adj_freq_range) > 0) {
+         value_baselines <- subset(cut_tall,
+            freq >= min(adj_freq_range) & freq <= max(adj_freq_range))$value;
+         if (useMedian) {
+            value_baseline <- median(value_baselines);
+         } else {
+            value_baseline <- mean(value_baselines);
+         }
+         cut_tall$value_baseline <- value_baseline;
+         cut_tall$adj_value <- cut_tall$value - cut_tall$value_baseline;
+      }
+      return(cut_tall);
+   }
+   return(cut_m);
+}
+
+#' Choose exemplar channel
+#'
+#' Choose exemplar channel
+#'
+#' This function takes tall output from `summarize_event_bins()`,
+#' with multiple channels and events per animal, and choose one
+#' channel to serve as the exemplar for analysis for each animal,
+#' across all events.
+#'
+#' The basic assumption is that each channel is representing the
+#' same signal, but with different level of specificity or
+#' signal-to-noise, dependent upon the sensor associated with
+#' each channel. This function attempts to choose the one channel
+#' with highest signal, and best signal-to-noise.
+#'
+#' Alternatively, this function can be used to calculate the
+#' mean or median signal across all channels.
+#'
+#' @export
+choose_exemplar_channel <- function
+(x,
+ exemplar_method=c("highest", "median", "mean"),
+ group_colnames=c("time_bin"),
+ animal_colname="animal",
+ event_colname="event",
+ channel_colname="channel",
+ value_colname="value",
+ freq_colname="freq",
+ freq_range=c(7, 15),
+ ...)
+{
+   ##
+   exemplar_method <- match.arg(exemplar_method);
+
+   keep_colnames <- c(animal_colname,
+      event_colname,
+      channel_colname,
+      value_colname,
+      freq_colname,
+      group_colnames);
+   channel_values <- unique(x[[channel_colname]]);
+   x3 <- x[,keep_colnames,drop=FALSE] %>%
+      tidyr::spread(key=channel_colname,
+         value=value_colname);
+   channel_wide <- intersect(channel_values,
+      colnames(x3));
+   if ("median" %in% exemplar_method) {
+      x3[,"value"] <- matrixStats::rowMedians(
+         as.matrix(x3[,channel_wide,drop=FALSE]),
+         na.rm=TRUE);
+      x3[,"channel"] <- "median_signal";
+      x_use <- x3[,setdiff(colnames(x3), channel_wide),drop=FALSE];
+   } else if ("mean" %in% exemplar_method) {
+      x3[,"value"] <- rowMeans(
+         as.matrix(x3[,channel_wide,drop=FALSE]),
+         na.rm=TRUE);
+      x3[,"channel"] <- "mean_signal";
+      x_use <- x3[,setdiff(colnames(x3), channel_wide),drop=FALSE];
+   } else {
+      ## Define "best" as the highest difference in freq_range
+      xsub <- subset(x,
+         time_bin %in% c("tone", "pre", "trace") &
+         freq >= min(freq_range) & freq <= max(freq_range));
+      xsub_diff <- splicejam::shrinkMatrix(
+         xsub$value,
+         groupBy=pasteByRow(xsub[,c("animal","event","channel","time_bin")], sep=":"),
+         shrinkFunc=function(x){diff(range(x))});
+      xsub_diff[,c("animal","event","channel","time_bin")] <- rbindList(
+         strsplit(xsub_diff$groupBy, ":"));
+      xsub_diff_best <- splicejam::shrinkMatrix(xsub_diff[,"x"],
+         groupBy=pasteByRow(xsub_diff[,c("animal","time_bin")], sep=":"),
+         shrinkFunc=max);
+      xsub_diff_worst <- splicejam::shrinkMatrix(xsub_diff[,"x"],
+         groupBy=pasteByRow(xsub_diff[,c("animal","time_bin")], sep=":"),
+         shrinkFunc=min);
+
+      xsub_max <- splicejam::shrinkMatrix(
+         xsub$value,
+         groupBy=pasteByRow(xsub[,c("animal","event","channel","time_bin")], sep=":"),
+         shrinkFunc=function(x){max(x)});
+      xsub_diff[,"max_signal"] <- xsub_max[,"x"];
+
+      xsub_diff_best_v <- nameVector(xsub_diff_best[,2:1]);
+      xsub_diff_worst_v <- nameVector(xsub_diff_worst[,2:1]);
+      xsub_diff[,"animal:time_bin"] <- pasteByRow(xsub_diff[,c("animal","time_bin")],
+         sep=":");
+      xsub_diff2 <- subset(xsub_diff,
+         xsub_diff[,"x"] == xsub_diff_best_v[xsub_diff[,"animal:time_bin"]])
+      xsub_diff3 <- subset(xsub_diff,
+         xsub_diff[,"x"] == xsub_diff_worst_v[xsub_diff[,"animal:time_bin"]])
+
+      ## Subset xsub_diff2
+      xsub_diff2bad <- subset(xsub_diff2, pasteByRow(xsub_diff2[,c("animal","channel")]) %in%
+            pasteByRow(xsub_diff3[,c("animal","channel")]));
+      ## Conclusion: even the bad ones aren't obviously bad in profile plots
+
+      ## count unique channels per animal
+      xsub_diff2_ct <- splicejam::shrinkMatrix(xsub_diff2[,"channel"],
+         groupBy=xsub_diff2[,"animal"],
+         shrinkFunc=function(x){length(unique(x))});
+
+      ## Choose best by highest delta
+      xsub_diff2_maxdelta <- splicejam::shrinkMatrix(xsub_diff2[,"x"],
+         groupBy=xsub_diff2[,"animal"],
+         shrinkFunc=max);
+      xsub_diff2_ismaxdelta <- subset(xsub_diff2,
+         x == xsub_diff2_maxdelta[match(xsub_diff2[,"animal"], xsub_diff2_maxdelta[,"groupBy"]),"x"]);
+
+      ## Choose best by highest signal
+      xsub_diff2_maxsignal <- splicejam::shrinkMatrix(xsub_diff2[,"max_signal"],
+         groupBy=xsub_diff2[,"animal"],
+         shrinkFunc=max);
+      xsub_diff2_ismaxsignal <- subset(xsub_diff2,
+         max_signal == xsub_diff2_maxsignal[match(xsub_diff2[,"animal"], xsub_diff2_maxsignal[,"groupBy"]),"x"]);
+      table(xsub_diff2_ismaxsignal$channel == xsub_diff2_ismaxdelta$channel)
+      dis_rows <- which(xsub_diff2_ismaxsignal$channel != xsub_diff2_ismaxdelta$channel);
+      #data.frame(xsub_diff2_ismaxdelta[dis_rows,], xsub_diff2_ismaxsignal[dis_rows,c("x","channel","max_signal")])
+      ## Conclusion: max signal tiebreaker seems most effective
+      channel_per_animal <- nameVector(xsub_diff2_ismaxsignal[,c("channel", "animal")]);
+      x_use <- subset(x,
+         channel == channel_per_animal[x$animal]);
+   }
+   return(x_use);
+}
+

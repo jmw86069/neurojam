@@ -9,7 +9,8 @@ get_ephys_event_data(mat_l, channels, events = NULL,
   default_event_diff = 40, event_prestart = 4000,
   event_poststop = 4000, event_label = "Tone", event_grep = "^EV",
   attr_names = c("animal", "channel", "ts.step", "ts"),
-  all_start_grep = "^Start", all_start_row = 2, verbose = FALSE, ...)
+  all_start_grep = "^Start", all_start_row = 2,
+  all_start_fixed = NULL, verbose = FALSE, ...)
 }
 \arguments{
 \item{mat_l}{\code{list} containing raw signal output from

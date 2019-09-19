@@ -2,12 +2,120 @@
 % Please edit documentation in R/neurojam-biwavelet.R
 \name{event_freq_profile}
 \alias{event_freq_profile}
-\title{Event to frequency profile}
+\title{Calculate animal event frequency profile}
 \usage{
-event_freq_profile(events_m_1, i_step = 0.001, animal, event, channel,
-  time_bin_n = 2, time_bin_labels = c("tone", "trace"),
-  return_type = c("profile", "list"), verbose = FALSE, ...)
+event_freq_profile(eventsm, step = NULL, animal = NULL,
+  channel = NULL, event = NULL, project = NULL, phase = NULL,
+  event_prestart = NULL, event_poststop = NULL, pre_bin_n = 1,
+  time_bin_n = 2, post_bin_n = 1, pre_bin_labels = "pre",
+  time_bin_labels = c("tone", "trace"), post_bin_labels = "post",
+  new_step = 0.1, x_condense_factor = new_step/step, dj = 1/6,
+  s0_factor = 5, s0 = step * s0_factor, mother = "morlet",
+  do.sig = FALSE, freq_range = c(1, 20), freq_step = 0.2,
+  freq_method = c("2"), adj_freq_range = c(3, 5),
+  return_type = c("profile", "list"), con = NULL,
+  animal_event_derived_table = "animal_event_derived",
+  useMedian = FALSE, dryrun = FALSE, verbose = FALSE, ...)
+}
+\arguments{
+\item{eventsm}{numeric matrix whose first column contains
+raw signal data for the event to be analyzed. It may optionally
+contain a second column with time stamp, assumed to be
+in units of seconds, or consistent units with the \code{"step"}
+value.
+Some attributes are required to be present in \code{eventsm}:
+\code{"event_prestart"}, \code{"event_poststop"} contain the number
+of time steps before the event start, and after the event
+stop, respectively. Practically, this adjustment allows
+calculating a proper \code{zero} time point, and to indicate
+when the official event duration ends.
+\code{eventsm} can also be a list, in which case all arguments
+\code{animal,step,channel,project,phase,event_prestart,event_poststop}
+are required to be present as attributes of each item in the
+list.}
+
+\item{step, animal, channel, event, project, phase, event_prestart, event_poststop}{arguments that describe the source of the event data.}
+
+\item{pre_bin_n, time_bin_n, post_bin_n}{integer values indicating
+the number of bins to sub-divide each time window:
+\code{pre_bin_n} divides the pre-event signal into this many bins;
+\code{time_bin_n} divides the event signal into this many bins;
+\code{post_bin_n} divides the post-event signal into this many bins.}
+
+\item{pre_bin_labels, time_bin_labels, post_bin_labels}{character
+string or vector indicating how to many the bins for each
+time window, when any of \code{pre_bin_n,time_bin_n,post_bin_n}
+are greater than 1. The character string is extended to the
+appropriate length, then make unique with
+\code{jamba::makeNames(..., suffix="_")}.}
+
+\item{new_step}{numeric value indicating the new time step
+size to store, which effectively reduces the data to this
+time unit per output column. For example, \code{new_step=0.1}
+will store data in increments of 0.1 seconds. Data is
+condensed using \code{condense_freq_matrix()}.}
+
+\item{x_condense_factor}{numeric value calculated using
+\code{new_step/step}. Using \code{new_step} allows condensing
+data to a fixed time step, instead of condensing data
+by a fixed factor which is applied regardless the time step.}
+
+\item{dj, s0, mother, do.sig}{arguments passed to \code{calc_ephys_wavelet()}
+which ultimately passes those arguments to \code{biwavelet::wt()}.}
+
+\item{freq_range}{numeric vector indicating the range of frequencies
+to include in the output data.}
+
+\item{freq_step}{numeric value indicating the frequency step, used
+to create a sequence of frequencies across the range defined
+by \code{freq_range}.}
+
+\item{freq_method}{string indicating which frequency method to use
+when determining intermediate frequency values: \code{"1"} chooses the
+closest available frequency returned by \code{biwavelet::wt()};
+\code{"2"} performs linear interpolation and returns the value
+returned from \code{stats::approx()}.}
+
+\item{adj_freq_range}{numeric range for which adjusted frequency
+values should be calculated. The method subtracts the mean
+frequency across this range from the total frequency profile.}
+
+\item{return_type}{character string indicating the output format:
+\code{"profile"} returns only the frequency profile for each time
+bin; \code{"list"} returns a list containing the frequency profile,
+and the full frequency-time matrix returned from \code{biwavelet::wt()}
+after also calling \code{condense_freq_matrix()}.}
+
+\item{animal_event_derived_table}{character string indicating the
+name of the database table that contains derived event data,
+where the results of this function will store data. If the
+requested data is already present in the database, it will be
+retrieved directly instead of re-calculating results.}
+
+\item{useMedian}{logical indicating whether to use median instead
+of mean value when calculating the adjusted frequency.}
+
+\item{dryrun}{logical indicating whether to perform a dry-run
+without performing calculations, and without storing results
+in the datbase.}
+
+\item{verbose}{logical indicating whether to print verbose output.}
+
+\item{...}{additional arguments are passed to downstream functions.}
 }
 \description{
-Event to frequency profile
+Calculate animal event frequency profile
+}
+\details{
+This function takes event signal data, and calculates
+a frequency matrix, with frequency period rows, and time
+columns, the result of \code{calc_ephys_wavelet()} which in turn
+calls \code{biwavelet::wt()} wavelet transform. By default it
+returns the power-corrected frequency \code{"power.corr"}.
+
+When \code{con} is provided as a \code{DBI} database connection,
+data is stored in a relational database table using
+\code{save_animal_event_derived()}. It will first check if the
+data already exists in the database, and if so it
+will return the database result.
 }

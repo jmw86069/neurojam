@@ -65,6 +65,7 @@ get_ephys_event_data <- function
  attr_names=c("animal", "channel", "ts.step", "ts"),
  all_start_grep="^Start",
  all_start_row=2,
+ all_start_fixed=NULL,
  verbose=FALSE,
  ...)
 {
@@ -93,6 +94,15 @@ get_ephys_event_data <- function
    ## Event data
    event_names <- provigrep(event_grep, names(mat_l));
    event_data <- mat_l[event_names];
+   if (verbose) {
+      printDebug("get_ephys_event_data(): ",
+         "event_names:",
+         event_names,
+         ", event_start:",
+         event_names[event_start],
+         ", event_stop:",
+         event_names[event_stop]);
+   }
 
    if (nrow(event_data[[event_start]]) > nrow(event_data[[event_stop]])) {
       if (length(default_event_diff) > 0) {
@@ -103,8 +113,14 @@ get_ephys_event_data <- function
          }
          new_event_rows <- event_data[[event_start]] + default_event_diff;
          diff_nrow <- nrow(event_data[[event_start]]) - nrow(event_data[[event_stop]]);
-         event_data[[event_stop]] <- rbind(event_data[[event_stop]],
-            tail(new_event_rows, diff_nrow));
+         new_event_stop <- event_data[[event_stop]];
+         i_rep <- rep(seq_len(nrow(new_event_stop)),
+            length.out=nrow(event_data[[event_start]]));
+         new_event_stop <- new_event_stop[i_rep,,drop=FALSE];
+         i_new <- tail(seq_len(nrow(new_event_stop)),
+            diff_nrow);
+         new_event_stop[i_new,1] <- new_event_rows[i_new];
+         event_data[[event_stop]] <- new_event_stop;
          if (verbose) {
             printDebug("get_ephys_event_data(): ",
                "Repairing incomplete event stop, to:");
@@ -153,7 +169,14 @@ get_ephys_event_data <- function
 
    ## Overall Start
    all_start <- 0;
-   if (length(all_start_grep) > 0 && nchar(all_start_grep) > 0) {
+   if (length(all_start_fixed) > 0) {
+      if (verbose) {
+         printDebug("get_ephys_event_data(): ",
+            "Using all_start_fixed:",
+            all_start_fixed);
+      }
+      all_start <- all_start_fixed;
+   } else if (length(all_start_grep) > 0 && nchar(all_start_grep) > 0) {
       all_start_name <- head(vigrep(all_start_grep, names(mat_l)), 1);
       if (verbose) {
          printDebug("get_ephys_event_data(): ",
@@ -209,6 +232,12 @@ get_ephys_event_data <- function
    i_events <- seq_along(i_starts);
    names(i_starts) <- i_events;
    names(i_stops) <- i_events;
+   if (verbose) {
+      if (verbose) {
+         printDebug("get_ephys_event_data(): ",
+            "defined i_events:", i_events);
+      }
+   }
 
    ## Get specific data for each event
    if (length(events) > 0) {
@@ -218,6 +247,11 @@ get_ephys_event_data <- function
             " are present in observed i_events:",
             cPaste(i_events, doSort=FALSE))
          );
+      }
+      if (verbose) {
+         printDebug("get_ephys_event_data(): ",
+            "subsetting i_events by provided events:",
+            events);
       }
       i_events <- i_events[i_events %in% events];
       i_starts <- i_starts[as.character(i_events)];
@@ -258,8 +292,21 @@ get_ephys_event_data <- function
          i_starts[i_event] - event_prestart,
          i_stops[i_event] + event_poststop
       ));
-      (i_range[1] <= length(mat_l[[i_channel]]) &
-         i_range[2] <= length(mat_l[[i_channel]]))
+      is_available <- (i_range[1] <= length(mat_l[[i_channel]]) &
+         i_range[2] <= length(mat_l[[i_channel]]));
+      if (verbose && !is_available) {
+         if (verbose) {
+            printDebug("get_ephys_event_data(): ",
+               "length in channel ",
+               i_channel,
+               ":",
+               length(mat_l[[i_channel]]))
+            printDebug("get_ephys_event_data(): ",
+               "Requested value:",
+               i_range[2]);
+         }
+      }
+      is_available;
    });
    if (any(!in_range_l)) {
       if (verbose) {
@@ -269,7 +316,11 @@ get_ephys_event_data <- function
       i_events <- i_events[in_range_l];
       if (verbose) {
          printDebug("get_ephys_event_data(): ",
-            "new i_events:", i_events);
+            "subsetted by available time data i_events:",
+            i_events);
+         printDebug("get_ephys_event_data(): ",
+            "in_range_l:");
+         print(in_range_l);
       }
    }
 

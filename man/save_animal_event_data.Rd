@@ -6,7 +6,8 @@
 \usage{
 save_animal_event_data(con, events_m, animal = NULL, project = NULL,
   phase = NULL, step = NULL, event_prestart = NULL,
-  event_poststop = NULL, animal_event_data_table = "animal_event_data",
+  event_poststop = NULL, event_type = "event",
+  animal_event_data_table = "animal_event_data", overwrite = FALSE,
   dryrun = FALSE, verbose = FALSE, ...)
 }
 \arguments{
@@ -45,6 +46,14 @@ and event stop, which are included in the signal being stored.
 If either value is \code{NULL} the attribute of the same name
 is retrieved if possible, otherwise an error is thrown.}
 
+\item{event_type}{character string stored in the database table
+field \code{"event_type"}, intended to indicate whether a
+particular stored event signal represents \code{"baseline"} or
+\code{"event"} data. When \code{"baseline"} data is stored, it may
+be processed differently, for example in \code{event_freq_profile()}
+which divides the event signal into time bins, and which
+may not be relevant when working with baseline signal.}
+
 \item{animal_event_data_table}{character string with the name
 of the database table in which to store event data.}
 
@@ -69,7 +78,9 @@ per animal, per channel, and per annotated event.
 Other jam database functions: \code{\link{ephys_short_name}},
   \code{\link{extract_event_data}},
   \code{\link{get_animal_event_data}},
+  \code{\link{get_animal_event_derived}},
   \code{\link{get_animal_raw_data}},
+  \code{\link{save_animal_event_derived}},
   \code{\link{save_animal_raw_data}}
 }
 \concept{jam database functions}

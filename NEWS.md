@@ -1,3 +1,34 @@
+# version 0.0.3.900
+
+* Refactored `import_ephys_mat_1()` to allow multiple
+`channel_grep` patterns, in order to select the best
+available matching channel name where possible.
+* Several new functions for relational database interaction.
+* `matrix_period2hz()` converts a frequency matrix whose
+row units are period (time per occurrence) to Hertz
+frequency (occurrences per second). It provides
+linear frequency ranges by using `approx()` for
+interpolation between values in the original data
+which are in period units.
+* `save_animal_event_derived()` stores derived results
+from analysis on event data. It is intended to be used
+with `event_freq_profile()` which extracts event data,
+then performs biwavelet transformation, then derived
+downstream data.
+* `event_freq_profile()` extracts event data using
+`get_animal_event_data()`, performs `biwavelet::wt()`,
+condenses the frequency matrix (by default `"power.corr"`
+which is power-corrected) to time units of 0.1 seconds,
+then runs `summarize_event_bins()` to aggregate the
+power spectral density into bins within the overall
+event.
+* `summarize_event_bins()` takes event signal data,
+determines pre-event, and post-event time ranges,
+then subdivides the pre-, during-, and post-event
+time ranges into bins. These `time_bin` values are
+aggregated by taking the mean signal across the range.
+
+
 # version 0.0.2.900
 
 * Began transitioning all methods to use `RDBI` to store
