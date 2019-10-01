@@ -1,3 +1,18 @@
+# version 0.0.4.900
+
+* Another refactor, this time to change primary key for
+Ephys signal data to be the filename, from which animal
+associations are secondary and largely not necessary
+for most of the workflow. Each file is associated with
+the event tables, and channel data. From this information,
+each channel series of events can be extracted, processed
+by biwavelet and power spectral density, and stored in
+the database. No steps require animal association, which
+can therefore be done separately, for example after manual
+review of specific lab notes. Lastly, this workflow allows
+storing all relevant channels, then later using the
+appropriate subset for downstream analyses.
+
 # version 0.0.3.900
 
 * Refactored `import_ephys_mat_1()` to allow multiple
