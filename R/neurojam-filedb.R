@@ -448,3 +448,553 @@ deblob <- function
    }
 }
 
+#' Extract animal event data from database
+#'
+#' Extract animal event data from database
+#'
+#' @export
+extract_event_db <- function
+(con,
+ filename=NULL,
+ file_table="ephys_file",
+ file_event_table="file_event",
+ file_channel_table="file_channel",
+ file_channel_event_table="file_channel_event",
+ event_prestart=4,
+ event_poststop=4,
+ event_type="event",
+ default_event_diff=40,
+ load_db=TRUE,
+ reuse_db=TRUE,
+ verbose=FALSE,
+ ...)
+{
+   ## Purpose is to re-work extract_event_data() to use the filename db
+   ##
+   ## Todo: make this function capable of handling a mix of
+   ## pre-existing and new data. Currently if any data exists,
+   ## it returns it rather than processing anything potentially new.
+   ## This function also processes all channels per file, and
+   ## not a subset of channels.
+   if (length(event_type) != 1) {
+      stop(paste0("event_type is expected to have one value,",
+         " but length(event_type)=",
+         length(event_type)));
+   }
+
+   ## First check if data already exists, then return as-is
+   ## filename data
+   if (reuse_db && file_channel_event_table %in% DBI::dbListTables(con)) {
+      fce_pre_df <- DBI::dbGetQuery(con, paste0("
+         SELECT
+         *
+         FROM
+         ", file_channel_event_table, "
+         WHERE
+         valid = 1 and
+         filename = ? and
+         event_type = ? and
+         event_prestart = ? and
+         event_poststop = ?"),
+         param=list(filename,
+            event_type,
+            event_prestart,
+            event_poststop));
+      if (nrow(fce_pre_df) > 0) {
+         if (verbose) {
+            printDebug("extract_event_db(): ",
+               "Returning previously stored data for filename:",
+               filename);
+         }
+         return(fce_pre_df);
+      }
+   } else {
+      fce_pre_df <- NULL;
+   }
+
+
+   ## event data
+   event_wide <- get_event_table_db(con=con,
+      file_event_table=file_event_table,
+      base_max_duration=base_max_duration,
+      filename=filename);
+   ## Purpose is to retrieve output from import_ephys_mat_1()
+   ## Todo: add event_prestart, event_poststop to the table schema
+
+   ## New: verify filename exists
+
+   ## New: load raw signal per channel for the given filename
+   ## - convert event_wide to index positions using time_step
+   ##
+   ## channel data
+   channel_df <- DBI::dbGetQuery(con, paste0("
+      SELECT
+      *
+      FROM
+      ", file_channel_table, "
+      WHERE
+      valid = 1 and
+      filename = ?"),
+      param=list(filename));
+   ## filename data
+   filename_df <- DBI::dbGetQuery(con, paste0("
+      SELECT
+      *
+      FROM
+      ", file_table, "
+      WHERE
+      valid = 1 and
+      filename = ?"),
+      param=list(filename));
+
+   #channel_event_df <- mergeAllXY(
+   #   dplyr::select(channel_df, -signal),
+   #   dplyr::select(event_wide[,c("filename", "event_num", "event_start", "event_end")], -EVT01));
+
+   ## iterate each channel
+   if (verbose) {
+      printDebug("extract_event_db(): ",
+         "Iterating each of ",
+         nrow(channel_df),
+         " channels for filename:",
+         filename);
+   }
+   file_channel_event_df <- rbindList(lapply(seq_len(nrow(channel_df)), function(channel_row){
+      channel <- channel_df$channel[channel_row];
+      time_step <- channel_df$time_step[channel_row];
+      index_offset <- channel_df$index_offset[channel_row];
+      signal <- deblob(channel_df$signal[[channel_row]]);
+      ifilename <- channel_df$filename[channel_row];
+      ## calculate appropriate start and end
+      event_prestart_index <- event_prestart / time_step;
+      event_poststop_index <- event_poststop / time_step;
+      all_start <- subset(filename_df, filename %in% ifilename)$start;
+      all_start_index <- all_start / time_step;
+      event_nums <- subset(event_wide, filename %in% ifilename)$event_num;
+      event_starts <- subset(event_wide, filename %in% ifilename)$event_start / time_step;
+      event_stops <- subset(event_wide, filename %in% ifilename)$event_stop / time_step;
+      event_diffs <- event_stops - event_starts;
+      index_starts <- (event_starts - event_prestart_index - all_start_index);
+      index_stops <- (event_stops + event_poststop_index - all_start_index);
+      event_seq <- jamba::nameVector(seq_along(event_nums), event_nums);
+      iuse <- which(index_starts >= 1 & index_stops < nrow(signal));
+      ## Note:
+      ## In future this step would be where to apply time "masks"
+      ## per channel, filename, for specific time ranges. This mask
+      ## could be used to convert numeric values to NA.
+      if (verbose) {
+         printDebug("extract_event_db(): ",
+            "   Iterating ",
+            length(iuse),
+            " valid events of ",
+            length(index_stops),
+            " total events for channel:",
+            channel);
+      }
+      event_signals <- lapply(event_seq[iuse], function(iseq){
+         i_range <- seq(from=ceiling(index_starts[iseq]),
+            to=ceiling(index_stops[iseq]));
+         i_m <- signal[i_range,,drop=FALSE];
+         attr(i_m, "filename") <- ifilename;
+         attr(i_m, "time_step") <- time_step;
+         attr(i_m, "label_start") <- event_prestart_index + 1;
+         attr(i_m, "label_stop") <- event_prestart_index + 1 + event_diffs[iseq];
+         attr(i_m, "i_range") <- range(i_range);
+         attr(i_m, "event_num") <- event_nums[iseq];
+         attr(i_m, "event_prestart") <- event_prestart;
+         attr(i_m, "event_poststop") <- event_poststop;
+         i_m;
+      });
+      if (length(event_signals) == 0) {
+         return(NULL);
+      }
+      event_blobs <- emblob(event_signals, do_list=TRUE);
+      ## - filename
+      ## - channel
+      ## - event
+      ## - event_prestart
+      ## - event_poststop
+      ## - time_step
+      ## - signal
+      ## - event_type
+      fce_df <- data.frame(filename=ifilename,
+         channel=channel,
+         event_num=event_nums[iuse],
+         event_prestart=event_prestart,
+         event_poststop=event_poststop,
+         time_step=time_step,
+         event_nrow=sdim(event_signals)$rows,
+         valid=1
+      );
+      fce_df$event_signal <- I(event_blobs);
+      fce_df[,"event_type"] <- head(event_type, 1);
+      fce_df;
+   }));
+
+   if (load_db) {
+      ## - create table if necessary
+      ## - check if entry already exists
+      ## - add new entry
+      if (!file_channel_event_table %in% DBI::dbListTables(con)) {
+         if (verbose) {
+            printDebug("extract_event_db(): ",
+               "Calling DBI::dbCreateTable() ",
+               file_channel_event_table);
+         }
+         DBI::dbCreateTable(con=con,
+            name=file_channel_event_table,
+            fields=file_channel_event_df[0,,drop=FALSE]);
+      }
+
+      ## Populate table with new file data
+      if (verbose) {
+         printDebug("extract_event_db(): ",
+            "Calling DBI::dbAppendTable() ",
+            file_channel_event_table);
+      }
+      DBI::dbAppendTable(con,
+         name=file_channel_event_table,
+         value=file_channel_event_df);
+   } else if (verbose) {
+      printDebug("extract_event_db(): ",
+         "Skipping db loading.");
+   }
+   file_channel_event_df;
+}
+
+#' Retrieve event data by filename from the database
+#'
+#' Retrieve event data by filename from the database
+#'
+#' @export
+get_event_table_db <- function
+(con,
+ filename,
+ default_event_diff=40,
+ event_start_name="EVT02",
+ event_stop_name="EVT03",
+ file_event_table="file_event",
+ rename_columns=TRUE,
+ ...)
+{
+   ##
+   event_start_name <- head(event_start_name, 1);
+   event_stop_name <- head(event_stop_name, 1);
+   ## tidyr::spread(event_df, event_name, event_step
+   event_df <- DBI::dbGetQuery(con,
+      paste0("SELECT *
+         FROM ", file_event_table, "
+         WHERE filename = ?"),
+      param=list(filename));
+
+   event_wide <- tidyr::spread(event_df, event_name, event_step);
+   event_wide;
+   if (!all(c(event_start_name, event_stop_name) %in% colnames(event_wide))) {
+      printDebug("The event start and stop names are not in the event_wide colnames:");
+      print(head(event_wide, 30));
+      stop("event_start_name, event_stop_name not found in event data.");
+   }
+   na_start <- is.na(event_wide[,event_start_name]);
+   na_stop <- is.na(event_wide[,event_stop_name]) |
+      (!is.na(event_wide[,event_start_name]) & !is.na(event_wide[,event_stop_name]) &
+            event_wide[,event_start_name] > event_wide[,event_stop_name]);
+   if (any(na_start & !na_stop)) {
+      event_wide[(na_start & !na_stop),event_start_name] <-
+         (event_wide[(na_start & !na_stop),event_stop_name] - default_event_diff);
+   }
+   if (any(!na_start & na_stop)) {
+      event_wide[(!na_start & na_stop),event_stop_name] <-
+         (event_wide[(!na_start & na_stop),event_start_name] + default_event_diff);
+   }
+   if (rename_columns) {
+      event_wide <- renameColumn(event_wide,
+         from=c(event_start_name, event_stop_name),
+         to=c("event_start", "event_stop"));
+   }
+   return(event_wide);
+}
+
+
+#' Extract animal baseline signal data from raw db
+#'
+#' Extract animal baseline signal data from raw db
+#'
+#' @export
+extract_baseline_db <- function
+(con,
+   filename=NULL,
+   project=NULL,
+   phase=NULL,
+   file_table="ephys_file",
+   file_event_table="file_event",
+   file_channel_table="file_channel",
+   file_channel_event_table="file_channel_event",
+   before_event_only=TRUE,
+   event_prestart=4,
+   baseline_step=60,
+   baseline_max_duration=480,
+   all_start_fixed=NULL,
+   event_type="baseline",
+   load_db=TRUE,
+   verbose=FALSE,
+   ...)
+{
+   ## Purpose is to emulate extract_event_data() specifically
+   ## for non-event signal, generally before the first event.
+   ## Also this function uses the file database schema
+   if (length(event_type) != 1) {
+      stop(paste0("event_type is expected to have one value,",
+         " but length(event_type)=",
+         length(event_type)));
+   }
+
+   ## First check if data already exists, then return as-is
+   ## filename data
+   if (file_channel_event_table %in% DBI::dbListTables(con)) {
+      fce_pre_df <- DBI::dbGetQuery(con, paste0("
+         SELECT
+         *
+         FROM
+         ", file_channel_event_table, "
+         WHERE
+         valid = 1 and
+         event_prestart = 0 and
+         event_poststop = 0 and
+         filename = ? and
+         event_type = ?"),
+         param=list(filename,
+            event_type));
+      if (nrow(fce_pre_df) > 0) {
+         if (verbose) {
+            printDebug("extract_baseline_db(): ",
+               "Returning previously stored data for filename:",
+               filename);
+         }
+         return(fce_pre_df);
+      }
+   } else {
+      fce_pre_df <- NULL;
+   }
+
+   ## event data
+   event_wide <- get_event_table_db(con=con,
+      file_event_table=file_event_table,
+      base_max_duration=base_max_duration,
+      filename=filename);
+
+   ## channel data
+   channel_df <- DBI::dbGetQuery(con, paste0("
+      SELECT
+      *
+      FROM
+      ", file_channel_table, "
+      WHERE
+      valid = 1 and
+      filename = ?"),
+      param=list(filename));
+
+   ## filename data
+   filename_df <- DBI::dbGetQuery(con, paste0("
+      SELECT
+      *
+      FROM
+      ", file_table, "
+      WHERE
+      valid = 1 and
+      filename = ?"),
+      param=list(filename));
+
+   ## Extract baseline ranges for each channel
+   if (verbose) {
+      printDebug("extract_baseline_db(): ",
+         "Iterating each of ",
+         nrow(channel_df),
+         " channels for filename:",
+         filename);
+   }
+   file_channel_event_df <- rbindList(lapply(seq_len(nrow(channel_df)), function(channel_row){
+      channel <- channel_df$channel[channel_row];
+      time_step <- channel_df$time_step[channel_row];
+      index_offset <- channel_df$index_offset[channel_row];
+      signal <- deblob(channel_df$signal[[channel_row]]);
+      ifilename <- channel_df$filename[channel_row];
+
+      ## calculate appropriate start and end
+      all_start <- subset(filename_df, filename %in% ifilename)$start;
+      all_start_index <- all_start / time_step;
+
+      index_start1 <- NULL;
+      if (before_event_only) {
+         event_prestart_index <- event_prestart / time_step;
+         event_starts <- subset(event_wide, filename %in% ifilename)$event_start / time_step;
+         event_start1 <- min(event_starts);
+         index_start1 <- (event_start1 - event_prestart_index - all_start_index);
+      }
+      if (length(baseline_max_duration) > 0) {
+         baseline_max <- baseline_max_duration / time_step;
+      } else {
+         baseline_max <- Inf;
+      }
+      baseline_max_index <- min(c(nrow(signal),
+         baseline_max,
+         index_start1 - 1));
+      if (baseline_max_index < 0) {
+         if (verbose) {
+            printDebug("extract_baseline_db(): ",
+               "First event start is less than 1. Skipping.");
+         }
+         return(NULL);
+      }
+
+      ## Define baseline ranges
+      baseline_step_index <- baseline_step/time_step;
+      baseline_steps <- seq(from=0,
+         to=baseline_max_index,
+         by=baseline_step_index);
+      baseline_start_index <- baseline_steps + 1;
+      baseline_stop_index <- noiseFloor(baseline_steps + baseline_step_index,
+         ceiling=baseline_max_index);
+      baseline_diff_index <- baseline_stop_index - baseline_start_index + 1;
+      iuse <- (baseline_diff_index >= baseline_step_index * 0.2);
+      baseline_start_index <- baseline_start_index[iuse];
+      baseline_stop_index <- baseline_stop_index[iuse];
+      event_nums <- seq_along(baseline_start_index);
+      names(baseline_start_index) <- makeNames(
+         renameFirst=FALSE,
+         rep("baseline", length.out=length(baseline_start_index)),
+         suffix="_");
+      if (verbose) {
+         printDebug("extract_baseline_db(): ",
+            "   Iterating ",
+            length(event_nums),
+            " baseline ranges for channel:",
+            channel);
+      }
+      event_signals <- lapply(nameVector(event_nums), function(iseq){
+         i_range <- seq(from=ceiling(baseline_start_index[iseq]),
+            to=ceiling(baseline_stop_index[iseq]));
+         i_m <- signal[i_range,,drop=FALSE];
+         attr(i_m, "filename") <- ifilename;
+         attr(i_m, "time_step") <- time_step;
+         attr(i_m, "label_start") <- 1;
+         attr(i_m, "label_stop") <- event_prestart_index + 1 + event_diffs[iseq];
+         attr(i_m, "i_range") <- length(i_range);
+         attr(i_m, "event_num") <- iseq;
+         attr(i_m, "event_prestart") <- 0;
+         attr(i_m, "event_poststop") <- 0;
+         i_m;
+      });
+      if (length(event_signals) == 0) {
+         return(NULL);
+      }
+      event_blobs <- emblob(event_signals, do_list=TRUE);
+      fce_df <- data.frame(filename=ifilename,
+         channel=channel,
+         event_num=event_nums[iuse],
+         event_prestart=0,
+         event_poststop=0,
+         time_step=time_step,
+         event_nrow=sdim(event_signals)$rows,
+         valid=1
+      );
+      fce_df$event_signal <- I(event_blobs);
+      fce_df[,"event_type"] <- head(event_type, 1);
+      fce_df;
+   }));
+
+   if (load_db) {
+      ## - create table if necessary
+      ## - check if entry already exists
+      ## - add new entry
+      if (!file_channel_event_table %in% DBI::dbListTables(con)) {
+         if (verbose) {
+            printDebug("extract_baseline_db(): ",
+               "Calling DBI::dbCreateTable() ",
+               file_channel_event_table);
+         }
+         DBI::dbCreateTable(con=con,
+            name=file_channel_event_table,
+            fields=file_channel_event_df[0,,drop=FALSE]);
+      }
+
+      ## Populate table with new file data
+      if (verbose) {
+         printDebug("extract_baseline_db(): ",
+            "Calling DBI::dbAppendTable() ",
+            file_channel_event_table);
+      }
+      DBI::dbAppendTable(con,
+         name=file_channel_event_table,
+         value=file_channel_event_df);
+   } else if (verbose) {
+      printDebug("extract_baseline_db(): ",
+         "Skipping db loading.");
+   }
+   file_channel_event_df;
+}
+
+#' Calculate biwavelet frequency-time matrix for an event
+#'
+#' Calculate biwavelet frequency-time matrix for an event
+#'
+#' @export
+calculate_wavelet_matrix <- function
+(signal,
+new_step=0.1,
+dj=1/16,
+s0_factor=5,
+s0=NULL,
+mother="morlet",
+do.sig=FALSE,
+type="power",
+freq_range=c(1, 20),
+freq_step=0.1,
+verbose=FALSE,
+ ...)
+{
+   #
+   ## create second column using time stamps
+   time_step <- attr(signal, "time_step");
+   label_start <- attr(signal, "label_start");
+   if (ncol(signal) == 1) {
+      xtime <- seq(from=time_step - (label_start * time_step),
+         by=time_step,
+         length.out=nrow(signal));
+      signal <- cbind(x=signal[,1], time=xtime);
+   }
+   ## biwavelet on signal
+   x_condense_factor <- new_step / time_step;
+   if (length(s0) == 0) {
+      s0 <- s0_factor * time_step;
+   }
+
+   t1 <- Sys.time();
+   i_m <- calc_ephys_wavelet(x=signal,
+      return_type="m",
+      type=type,
+      x_condense_factor=x_condense_factor,
+      step=time_step,
+      dj=dj,
+      s0=s0*1,
+      mother=mother,
+      do.sig=do.sig,
+      verbose=verbose);
+   ## Convert matrix with period units to frequency in hertz
+   iM2normal <- matrix_period2hz(i_m,
+      freq_method="2",
+      freq_range=freq_range,
+      freq_step=freq_step,
+      verbose=verbose);
+   t2 <- Sys.time();
+   if (verbose) {
+      printDebug("calculate_wavelet_matrix(): ",
+         "Calculation took:",
+         format(t2 - t1));
+   }
+   attr(iM2normal, "s0") <- s0;
+   attr(iM2normal, "dj") <- dj;
+   attr(iM2normal, "mother") <- mother;
+   attr(iM2normal, "type") <- type;
+   iM2normal;
+}
+

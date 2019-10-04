@@ -141,7 +141,8 @@ calc_ephys_wavelet <- function
    if (length(m) > 0) {
       iM <- m;
    } else {
-      iM <- iWt$power;
+      #iM <- iWt$power;
+      iM <- iWt[[type]];
       rownames(iM) <- iWt$period;
       colnames(iM) <- iWt$xaxis;
       attr(iM, "period") <- iWt$period;
@@ -1108,6 +1109,7 @@ summarize_event_bins <- function
  time_bin_labels=c("tone", "trace"),
  post_bin_labels="post",
  useMedian=FALSE,
+ trim=NULL,
  make_tall=FALSE,
  adj_freq_range=c(3, 5),
  verbose=FALSE,
@@ -1203,9 +1205,23 @@ summarize_event_bins <- function
             cPaste(format(digits=3, trim=TRUE, range(x)), sep=" .. ")
          }));
    }
+   if (length(trim) == 0 || all(trim == 0)) {
+      if (useMedian) {
+         rowStatsFunc <- rowMedians;
+      } else {
+         rowStatsFunc <- rowMeans;
+      }
+   } else {
+      rowStatsFunc <- function(x){
+         apply(x, 1, function(y){
+            mean(y, trim=trim, na.rm=TRUE);
+         });
+      }
+   }
    cut_m <- jamba::rowGroupMeans(x,
       groups=col_groups,
       useMedian=useMedian,
+      rowStatsFunc=rowStatsFunc,
       ...);
    if (make_tall) {
       cut_df <- data.frame(freq=as.numeric(rownames(cut_m)), cut_m);
