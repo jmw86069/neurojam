@@ -7,8 +7,8 @@
 summarize_event_bins(x, col_values = NULL, pre_time = 0,
   post_time = 0, pre_bin_n = 1, time_bin_n = 2, post_bin_n = 1,
   pre_bin_labels = "pre", time_bin_labels = c("tone", "trace"),
-  post_bin_labels = "post", useMedian = FALSE, make_tall = FALSE,
-  adj_freq_range = c(3, 5), verbose = FALSE, ...)
+  post_bin_labels = "post", useMedian = FALSE, trim = NULL,
+  make_tall = FALSE, adj_freq_range = c(3, 5), verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{numeric matrix whose \code{colnames(x)} represent time.}

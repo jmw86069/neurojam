@@ -1,3 +1,7 @@
+# version 0.0.5.900
+
+* More updates to use the filedb, and some bug fixes.
+
 # version 0.0.4.900
 
 * Another refactor, this time to change primary key for
