@@ -1274,10 +1274,12 @@ choose_exemplar_channel <- function
  value_colname="value",
  freq_colname="freq",
  freq_range=c(7, 15),
+ verbose=FALSE,
  ...)
 {
    ##
    exemplar_method <- match.arg(exemplar_method);
+   x <- unique(x);
 
    keep_colnames <- c(animal_colname,
       event_colname,
@@ -1285,6 +1287,7 @@ choose_exemplar_channel <- function
       value_colname,
       freq_colname,
       group_colnames);
+   keep_colnames <- intersect(keep_colnames, colnames(x))
    channel_values <- unique(x[[channel_colname]]);
    x3 <- x[,keep_colnames,drop=FALSE] %>%
       tidyr::spread(key=channel_colname,
@@ -1306,66 +1309,90 @@ choose_exemplar_channel <- function
    } else {
       ## Define "best" as the highest difference in freq_range
       xsub <- subset(x,
-         time_bin %in% c("tone", "pre", "trace") &
-         freq >= min(freq_range) & freq <= max(freq_range));
+         grepl("^(tone|pre|trace|baseline)", x[[group_colnames]]) &
+         x[[freq_colname]] >= min(freq_range) &
+         x[[freq_colname]] <= max(freq_range));
+      if (verbose) {
+         printDebug("dim(xsub):", dim(xsub));
+      }
       xsub_diff <- splicejam::shrinkMatrix(
-         xsub$value,
-         groupBy=pasteByRow(xsub[,c("animal","event","channel","time_bin")], sep=":"),
+         xsub[[value_colname]],
+         groupBy=pasteByRow(xsub[,c(animal_colname, event_colname, channel_colname, group_colnames)], sep=":"),
          shrinkFunc=function(x){diff(range(x))});
-      xsub_diff[,c("animal","event","channel","time_bin")] <- rbindList(
+      if (verbose) {
+         printDebug("dim(xsub_diff):", dim(xsub_diff));
+      }
+      xsub_diff[,c(animal_colname, event_colname, channel_colname, group_colnames)] <- rbindList(
          strsplit(xsub_diff$groupBy, ":"));
+      if (verbose) {
+         printDebug("dim(xsub_diff):", dim(xsub_diff));
+      }
       xsub_diff_best <- splicejam::shrinkMatrix(xsub_diff[,"x"],
-         groupBy=pasteByRow(xsub_diff[,c("animal","time_bin")], sep=":"),
+         groupBy=pasteByRow(xsub_diff[,c(animal_colname, group_colnames)], sep=":"),
          shrinkFunc=max);
+      if (verbose) {
+         printDebug("dim(xsub_diff_best):", dim(xsub_diff_best));
+      }
       xsub_diff_worst <- splicejam::shrinkMatrix(xsub_diff[,"x"],
-         groupBy=pasteByRow(xsub_diff[,c("animal","time_bin")], sep=":"),
+         groupBy=pasteByRow(xsub_diff[,c(animal_colname, group_colnames)], sep=":"),
          shrinkFunc=min);
+      if (verbose) {
+         printDebug("dim(xsub_diff_worst):", dim(xsub_diff_worst));
+      }
 
       xsub_max <- splicejam::shrinkMatrix(
          xsub$value,
-         groupBy=pasteByRow(xsub[,c("animal","event","channel","time_bin")], sep=":"),
+         groupBy=pasteByRow(xsub[,c(animal_colname, event_colname, channel_colname, group_colnames)], sep=":"),
          shrinkFunc=function(x){max(x)});
       xsub_diff[,"max_signal"] <- xsub_max[,"x"];
 
       xsub_diff_best_v <- nameVector(xsub_diff_best[,2:1]);
       xsub_diff_worst_v <- nameVector(xsub_diff_worst[,2:1]);
-      xsub_diff[,"animal:time_bin"] <- pasteByRow(xsub_diff[,c("animal","time_bin")],
+      xsub_diff[,"animal:time_bin"] <- pasteByRow(xsub_diff[,c(animal_colname, group_colnames)],
          sep=":");
       xsub_diff2 <- subset(xsub_diff,
          xsub_diff[,"x"] == xsub_diff_best_v[xsub_diff[,"animal:time_bin"]])
+      if (verbose) {
+         printDebug("dim(xsub_diff2):", dim(xsub_diff2));
+         print(xsub_diff2);
+      }
       xsub_diff3 <- subset(xsub_diff,
          xsub_diff[,"x"] == xsub_diff_worst_v[xsub_diff[,"animal:time_bin"]])
+      if (verbose) {
+         printDebug("dim(xsub_diff3):", dim(xsub_diff3));
+         print(xsub_diff3);
+      }
 
       ## Subset xsub_diff2
-      xsub_diff2bad <- subset(xsub_diff2, pasteByRow(xsub_diff2[,c("animal","channel")]) %in%
-            pasteByRow(xsub_diff3[,c("animal","channel")]));
+      xsub_diff2bad <- subset(xsub_diff2, pasteByRow(xsub_diff2[,c(animal_colname,channel_colname)]) %in%
+            pasteByRow(xsub_diff3[,c(animal_colname,channel_colname)]));
       ## Conclusion: even the bad ones aren't obviously bad in profile plots
 
       ## count unique channels per animal
-      xsub_diff2_ct <- splicejam::shrinkMatrix(xsub_diff2[,"channel"],
-         groupBy=xsub_diff2[,"animal"],
+      xsub_diff2_ct <- splicejam::shrinkMatrix(xsub_diff2[,channel_colname],
+         groupBy=xsub_diff2[,animal_colname],
          shrinkFunc=function(x){length(unique(x))});
 
       ## Choose best by highest delta
       xsub_diff2_maxdelta <- splicejam::shrinkMatrix(xsub_diff2[,"x"],
-         groupBy=xsub_diff2[,"animal"],
+         groupBy=xsub_diff2[,animal_colname],
          shrinkFunc=max);
       xsub_diff2_ismaxdelta <- subset(xsub_diff2,
-         x == xsub_diff2_maxdelta[match(xsub_diff2[,"animal"], xsub_diff2_maxdelta[,"groupBy"]),"x"]);
+         x == xsub_diff2_maxdelta[match(xsub_diff2[,animal_colname], xsub_diff2_maxdelta[,"groupBy"]),"x"]);
 
       ## Choose best by highest signal
       xsub_diff2_maxsignal <- splicejam::shrinkMatrix(xsub_diff2[,"max_signal"],
-         groupBy=xsub_diff2[,"animal"],
+         groupBy=xsub_diff2[,animal_colname],
          shrinkFunc=max);
       xsub_diff2_ismaxsignal <- subset(xsub_diff2,
-         max_signal == xsub_diff2_maxsignal[match(xsub_diff2[,"animal"], xsub_diff2_maxsignal[,"groupBy"]),"x"]);
-      table(xsub_diff2_ismaxsignal$channel == xsub_diff2_ismaxdelta$channel)
-      dis_rows <- which(xsub_diff2_ismaxsignal$channel != xsub_diff2_ismaxdelta$channel);
+         max_signal == xsub_diff2_maxsignal[match(xsub_diff2[,animal_colname], xsub_diff2_maxsignal[,"groupBy"]),"x"]);
+      table(xsub_diff2_ismaxsignal[[channel_colname]] == xsub_diff2_ismaxdelta[[channel_colname]])
+      dis_rows <- which(xsub_diff2_ismaxsignal[[channel_colname]] != xsub_diff2_ismaxdelta[[channel_colname]]);
       #data.frame(xsub_diff2_ismaxdelta[dis_rows,], xsub_diff2_ismaxsignal[dis_rows,c("x","channel","max_signal")])
       ## Conclusion: max signal tiebreaker seems most effective
-      channel_per_animal <- nameVector(xsub_diff2_ismaxsignal[,c("channel", "animal")]);
+      channel_per_animal <- nameVector(xsub_diff2_ismaxsignal[,c(channel_colname, animal_colname)]);
       x_use <- subset(x,
-         channel == channel_per_animal[x$animal]);
+         channel == channel_per_animal[x[[animal_colname]]]);
    }
    return(x_use);
 }
