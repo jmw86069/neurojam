@@ -5,9 +5,41 @@
 \title{Condense a spectral frequence data matrix}
 \usage{
 condense_freq_matrix(x, column_n = ncol(x), row_n = nrow(x),
-  verbose = TRUE, ...)
+  column_method = c("max", "mean", "min"), row_method = c("mean",
+  "max", "min"), column_edge = c("full"), row_edge = c("half", "full"),
+  column_offset = 0, row_offset = 0, verbose = TRUE, ...)
 }
 \description{
 Condense a spectral frequence data matrix
+}
+\details{
+This function takes a numeric matrix, whose columns are
+time, and rows are frequency, and bins columns and rows
+to produce a smaller numeric matrix.
+
+It imposes some rules to bin labels:
+\itemize{
+\item Columns are considered time, the label assigned to the
+new time bins are typically the "max" value from each bin,
+such that time "0.01" through "1.00" will be labeled "1.00",
+to represent "the first second bin".
+\item Rows are considered frequency, where each bin will be
+labeled by the mean frequency. For example if frequencies
+"6.75" through "7.25" are binned, the output should be "7.0"
+which represents the central frequency of the binned values.
+}
+
+Also, bins at the edges have two options:
+\enumerate{
+\item "full" indicates the first bin will be full size, and all
+bins will be equal to that size. This strategy makes sense for
+time, so each time bin is the same duration.
+\item "half" indicates the first bin will be half the width of
+subsequent bins. This strategy makes sense for frequency, to
+help preserve the frequency nearest the edge of the matrix.
+The last bin will also be half the width of intermediate bins.
+In this case the first bin is labeled by the first value, and
+the last bin is labeled by the last value.
+}
 }
 \concept{jam matrix functions}

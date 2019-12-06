@@ -20,6 +20,8 @@ Other jam database functions: \code{\link{ephys_short_name}},
   \code{\link{get_animal_raw_data}},
   \code{\link{save_animal_event_data}},
   \code{\link{save_animal_event_derived}},
-  \code{\link{save_animal_raw_data}}
+  \code{\link{save_animal_raw_data}},
+  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
+  \code{\link{sqlite_view}}
 }
 \concept{jam database functions}

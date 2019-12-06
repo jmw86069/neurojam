@@ -1,3 +1,15 @@
+# version 0.0.6.900
+
+## New functions specific to SQLite databases:
+
+* `sqlite_desc()` is a describe function, similar to `desc`.
+* `sqlite_view()` gives deeper information about database views,
+including the source tables, and whether each column in the
+source table is indexed.
+* `sqlite_indices()` lists fields of each table that have
+an associated index.
+
+
 # version 0.0.5.900
 
 * More updates to use the filedb, and some bug fixes.

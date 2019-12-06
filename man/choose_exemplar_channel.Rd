@@ -8,7 +8,7 @@ choose_exemplar_channel(x, exemplar_method = c("highest", "median",
   "mean"), group_colnames = c("time_bin"), animal_colname = "animal",
   event_colname = "event", channel_colname = "channel",
   value_colname = "value", freq_colname = "freq", freq_range = c(7,
-  15), ...)
+  15), verbose = FALSE, ...)
 }
 \description{
 Choose exemplar channel
