@@ -196,7 +196,7 @@ discretize_labels <- function
    }));
    ## Append fraction difference
    itarget <- cbind(itarget,
-      diff=rmNA(infiniteValue=0,
+      diff=jamba::rmNA(infiniteValue=0,
          abs(itarget[,"row_value"] - itarget[,"label"])/itarget[,"label"])
    );
    ## Filter by fraction difference from target
@@ -357,7 +357,7 @@ list2groups <- function
 freq_heatmap <- function
 (x,
  quantile_max=0.99,
- col=getColorRamp("Reds", lens=2, n=25),
+ col=jamba::getColorRamp("Reds", lens=2, n=25),
  row_label_n=25,
  column_label_n=25,
  row_range=NULL,
@@ -392,7 +392,7 @@ freq_heatmap <- function
          breaks=seq(from=num_range[1],
             to=num_range[2],
             length.out=25),
-         colors=getColorRamp(col, n=25)
+         colors=jamba::getColorRamp(col, n=25)
       )
    }
 
@@ -482,4 +482,140 @@ freq_heatmap <- function
       ...
    );
    return(HM);
+}
+
+#' Heatmap of frequency-time matrix for animal signal data
+#'
+#' Heatmap of frequency-time matrix for animal signal data
+#'
+#' This function queries the database to return data, then
+#' calls `freq_heatmap()` to create the heatmap.
+#'
+#' @family jam matrix functions
+#' @family jam heatmap functions
+#'
+#' @param dbxcon DBI database connection
+#' @param animal,project,phase,filename,channel,time_step_sec,freq_step_hz
+#'    arguments used to filter the database table `fca_freq_matrix` in
+#'    order to specify only one row in the results, therefore only one
+#'    frequency-time matrix.
+#' @param plot logical indicating whether to plot the output. When
+#'    `plot=FALSE` the `data.frame` of query results is returned, and
+#'    no heatmap is created. This option can be helpful when querying
+#'    the database.
+#' @param type character value indicating the type of output, where
+#'    `"Heatmap"` will return the Heatmap object; and `"matrix"` will
+#'    return the numeric matrix itself, and not the heatmap.
+#' @param verbose logical indicating whether to print verbose output.
+#' @param ... additional arguments are passed to `freq_heatmap()`,
+#'    see that function documentation for info on customizing the
+#'    heatmap.
+#'
+#' @examples
+#' # db_path <- "ephys_db.sqlite";
+#' # dbxcon <- dbx::dbxConnect(adapter="sqlite", dbname=db_path);
+#'
+#' ## Basic query of available data
+#' # head(signal_freq_heatmap(dbxcon), 20)
+#'
+#' ## Tabulate data by phase
+#' # table(signal_freq_heatmap(dbxcon)[,c("project","phase")])
+#' # table(signal_freq_heatmap(dbxcon)[,c("animal","phase")])
+#'
+#' ## Provide animal and phase, create heatmap
+#' # signal_freq_heatmap(dbxcon, animal="AF11-4", phase="Acquisition", plot=TRUE)
+#'
+#' ## Another example
+#' # signal_freq_heatmap(dbxcon, animal="SA88-1", phase="Acquisition", plot=TRUE)
+#'
+#' ## Zoom into a specific time range
+#' # signal_freq_heatmap(dbxcon, animal="SA88-1", phase="Acquisition", plot=TRUE, column_range=c(400,700))
+#'
+#' @export
+signal_freq_heatmap <- function
+(dbxcon,
+ animal=NULL,
+ project=NULL,
+ phase=NULL,
+ filename=NULL,
+ channel=NULL,
+ time_step_sec=NULL,
+ freq_step_hz=NULL,
+ plot=FALSE,
+ type=c("Heatmap", "matrix"),
+ verbose=FALSE,
+ ...)
+{
+   ##
+   type <- match.arg(type);
+   freq_df <- dbGetQuery(dbxcon,
+      "SELECT
+      ffm.animal,
+      ffm.channel,
+      ffm.filename,
+      ffm.time_step_sec,
+      ffm.freq_step_hz,
+      ef.project,
+      ef.phase
+      FROM
+      fca_freq_matrix ffm,
+      ephys_file ef
+      WHERE
+      ffm.filename = ef.filename
+      ");
+   paramnames <- c("animal", "project", "phase", "channel", "filename",
+      "time_step_sec", "freq_step_hz");
+   for (paramname in paramnames) {
+      val <- get(paramname);
+      if (length(val) > 0) {
+         if (verbose) {
+            printDebug("signal_freq_heatmap(): ",
+               "Subsetting data for ", paramname, ": ",
+               val);
+         }
+         freq_df <- subset(freq_df, freq_df[[paramname]] %in% val);
+      }
+   }
+   if (!plot || nrow(freq_df) == 0) {
+      return(freq_df);
+   }
+   if (nrow(freq_df) > 1) {
+      printDebug("signal_freq_heatmap(): ",
+         "Data contains ",
+         nrow(freq_df),
+         " rows. Please reduce query to one row.");
+   }
+   i <- 1;
+   #HML <- lapply(seq_len(nrow(freq_df)), function(i){
+      ## Get im_json
+      im_json <- dbGetQuery(dbxcon,
+         "SELECT
+         im_json
+         FROM
+         fca_freq_matrix
+         WHERE
+         filename = ? and
+         channel = ? and
+         animal = ? and
+         time_step_sec = ? and
+         freq_step_hz = ?",
+         params=list(
+            freq_df[["filename"]][i],
+            freq_df[["channel"]][i],
+            freq_df[["animal"]][i],
+            freq_df[["time_step_sec"]][i],
+            freq_df[["freq_step_hz"]][i]
+            ))[[1]];
+      if (verbose) {
+         printDebug("signal_freq_heatmap(): ",
+            "Converting im_json with jsonlite::fromJSON().");
+      }
+      im <- jsonlite::fromJSON(im_json);
+      if ("matrix" %in% type) {
+         return(im);
+      }
+      HM <- freq_heatmap(im,
+         ...);
+      return(HM);
+   #});
 }

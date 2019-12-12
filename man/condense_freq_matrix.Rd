@@ -46,6 +46,7 @@ the last bin is labeled by the last value.
 \seealso{
 Other jam matrix functions: \code{\link{cutIntoChunks}},
   \code{\link{discretize_labels}},
-  \code{\link{freq_heatmap}}
+  \code{\link{freq_heatmap}},
+  \code{\link{signal_freq_heatmap}}
 }
 \concept{jam matrix functions}

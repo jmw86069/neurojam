@@ -2,6 +2,22 @@
 
 ## new functions
 
+* `signal_freq_matrix()` queries previously stored frequency-time
+matrix data from the database, as defined by animal, channel, project,
+phase, etc. It then creates a heatmap using `freq_heatmap()`.
+When argument `type="Heatmap"` by default, it creates a heatmap
+using ComplexHeatmap::Heatmap().
+When argument `type="matrix"` it returns the numeric matrix itself,
+which can be further analyzed.
+When the input query is not specific enough to return only one row,
+a `data.frame` of query results is returned, which can be helpful
+to see the available data.
+
+
+# version 0.0.7.900
+
+## new functions
+
 * `bin_biwavelets()` is a wrapper function that divides
 very large signal into subset time bins, processes each
 time bin by biwavelet transformation, then concatenates
