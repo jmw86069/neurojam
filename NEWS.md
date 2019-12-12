@@ -1,3 +1,51 @@
+# version 0.0.7.900
+
+## new functions
+
+* `bin_biwavelets()` is a wrapper function that divides
+very large signal into subset time bins, processes each
+time bin by biwavelet transformation, then concatenates
+the results. It cleverly extends the bins so each bin
+overlaps the previous and next bin, then trims the overlap
+away, in order to avoid edge artifacts.
+* `freq_heatmap()` takes a frequency-time matrix (power
+spectral density, psd) as output from `biwavelet::wt()`,
+and creates a heatmap using `ComplexHeatmap::Heatmap()`.
+It creates discretized labels, using `discretize_labels()`
+(obviously). It optionally allows splitting rows and columns
+by defined intervals, or at specific points.
+
+## Bug fix / enhancement
+
+**Note:** `condense_freq_matrix()` may change in near future to
+allow distinct time step sizes, and frequency step sizes, instead
+of condensing the columns and rows into a fixed number of output
+columns. The problem occurs when some signal data spans 99.7%
+to 100.5% the intended time duration, causing small rounding errors
+in the output time bins, when dividing the data into equal size
+time bins.
+
+
+* `condense_freq_matrix()` has two new arguments
+`column_pad` and `row_pad`, which are intended to help maintain
+consistent step widths when condensing a frequency-time
+matrix into distinct time bins. For example, when the intent
+is to use 1-second time bins, and the data contains 14.97 seconds,
+instead of dividing into 15 equal-sized bins (as previous) and labeling
+each bin accordingly, the new process allows "padding" the last
+0.03 second, then creating 15 bins of exactly 1.00-second duration.
+Note that this function cannot determine the padding, it
+must be determined by the upstream function.
+* `bin_biwavelets()` uses `new_step` to determine the `column_pad`
+value, which is sent to `calculate_wavelet_matrix()`,
+and then passed to `condense_freq_matrix()`.
+* `bin_biwavelets()` adds another argument `min_fraction` which
+is a threshold below which a time bin is dropped instead of being
+padded. For example, if the data spans 15.02 seconds, and the
+intent is to create 1.0-second time bins, the final 0.02 seconds
+will be dropped instead of padded. By default a time bin must have
+at least 0.4 the requested time bin to be kept.
+
 # version 0.0.6.900
 
 ## New functions specific to SQLite databases:

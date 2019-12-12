@@ -90,9 +90,11 @@ calc_ephys_wavelet <- function
  step=0.001,
  m=NULL,
  dj=1/6,
- s0=i_step*5,
+ s0=step*5,
  mother="morlet",
  do.sig=FALSE,
+ column_pad=c(0, 0),
+ row_pad=c(0, 0),
  verbose=FALSE,
  ...)
 {
@@ -151,6 +153,8 @@ calc_ephys_wavelet <- function
 
    ## Optionally compress the matrix
    if (x_condense_factor > 1) {
+      ## Check what fraction of time step is represented in the last
+      ## time step, if less than min_fraction, drop these rows
       column_n <- round(ncol(iM)/x_condense_factor);
       if (verbose) {
          printDebug("calc_ephys_wavelet(): ",
@@ -162,6 +166,8 @@ calc_ephys_wavelet <- function
       }
       iM2 <- condense_freq_matrix(iM,
          column_n=column_n,
+         column_pad=column_pad,
+         row_pad=row_pad,
          verbose=verbose);
    }
 

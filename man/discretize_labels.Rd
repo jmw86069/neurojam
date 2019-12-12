@@ -23,3 +23,11 @@ xd <- discretize_labels(x, target=pretty(x));
 data.frame(original_value=x, discretized_label=xd);
 
 }
+\seealso{
+Other jam matrix functions: \code{\link{condense_freq_matrix}},
+  \code{\link{cutIntoChunks}}, \code{\link{freq_heatmap}}
+
+Other jam heatmap functions: \code{\link{freq_heatmap}}
+}
+\concept{jam heatmap functions}
+\concept{jam matrix functions}

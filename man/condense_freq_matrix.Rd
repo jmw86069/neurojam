@@ -7,7 +7,8 @@
 condense_freq_matrix(x, column_n = ncol(x), row_n = nrow(x),
   column_method = c("max", "mean", "min"), row_method = c("mean",
   "max", "min"), column_edge = c("full"), row_edge = c("half", "full"),
-  column_offset = 0, row_offset = 0, verbose = TRUE, ...)
+  column_offset = 0, row_offset = 0, column_pad = c(0, 0),
+  row_pad = c(0, 0), verbose = TRUE, ...)
 }
 \description{
 Condense a spectral frequence data matrix
@@ -41,5 +42,10 @@ The last bin will also be half the width of intermediate bins.
 In this case the first bin is labeled by the first value, and
 the last bin is labeled by the last value.
 }
+}
+\seealso{
+Other jam matrix functions: \code{\link{cutIntoChunks}},
+  \code{\link{discretize_labels}},
+  \code{\link{freq_heatmap}}
 }
 \concept{jam matrix functions}

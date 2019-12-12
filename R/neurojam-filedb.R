@@ -940,24 +940,34 @@ extract_baseline_db <- function
 #' @export
 calculate_wavelet_matrix <- function
 (signal,
-new_step=0.1,
-dj=1/16,
-s0_factor=5,
-s0=NULL,
-mother="morlet",
-do.sig=FALSE,
-type="power",
-freq_range=c(1, 20),
-freq_step=0.1,
-verbose=FALSE,
+ new_step=0.1,
+ dj=1/16,
+ s0_factor=5,
+ s0=NULL,
+ mother="morlet",
+ do.sig=FALSE,
+ type="power",
+ freq_range=c(1, 20),
+ freq_step=0.1,
+ column_pad=c(0, 0),
+ row_pad=c(0, 0),
+ verbose=FALSE,
  ...)
 {
-   #
+   ## Todo:
+   ## - when data is extremely large, subdivide by time bins
+   ## - bins should be 2-minutes plus a buffer size on each side,
+   ## - then pieces of the result should be "stitched" together.
+   ##
+   ##
    ## create second column using time stamps
    time_step <- attr(signal, "time_step");
    label_start <- attr(signal, "label_start");
    if (ncol(signal) == 1) {
-      xtime <- seq(from=time_step - (label_start * time_step),
+      #xtime <- seq(from=time_step - (label_start * time_step),
+      #   by=time_step,
+      #   length.out=nrow(signal));
+      xtime <- seq(from=label_start,
          by=time_step,
          length.out=nrow(signal));
       signal <- cbind(x=signal[,1], time=xtime);
@@ -978,6 +988,8 @@ verbose=FALSE,
       s0=s0*1,
       mother=mother,
       do.sig=do.sig,
+      column_pad=column_pad,
+      row_pad=row_pad,
       verbose=verbose);
    ## Convert matrix with period units to frequency in hertz
    iM2normal <- matrix_period2hz(i_m,
