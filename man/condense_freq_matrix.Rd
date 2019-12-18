@@ -4,9 +4,10 @@
 \alias{condense_freq_matrix}
 \title{Condense a spectral frequence data matrix}
 \usage{
-condense_freq_matrix(x, column_n = ncol(x), row_n = nrow(x),
-  column_method = c("max", "mean", "min"), row_method = c("mean",
-  "max", "min"), column_edge = c("full"), row_edge = c("half", "full"),
+condense_freq_matrix(x, column_n = ncol(x), column_fixed_size = 1,
+  row_n = nrow(x), row_fixed_size = 1, column_method = c("min",
+  "max", "mean"), row_method = c("min", "mean", "max"),
+  column_edge = c("full", "half"), row_edge = c("full", "half"),
   column_offset = 0, row_offset = 0, column_pad = c(0, 0),
   row_pad = c(0, 0), verbose = TRUE, ...)
 }
@@ -42,6 +43,16 @@ The last bin will also be half the width of intermediate bins.
 In this case the first bin is labeled by the first value, and
 the last bin is labeled by the last value.
 }
+}
+\examples{
+freq_m <- matrix(ncol=200,
+   nrow=96,
+   data=seq_len(96*200),
+   dimnames=list(frequency=seq(from=1, by=0.2, length.out=96),
+      time=seq(from=0, by=0.01, length.out=200)));
+
+condense_freq_matrix(freq_m, column_fixed_size=10, row_fixed_size=5)[1:20,1:20]
+
 }
 \seealso{
 Other jam matrix functions: \code{\link{cutIntoChunks}},

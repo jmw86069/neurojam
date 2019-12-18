@@ -32,15 +32,26 @@
 #'
 #' @family jam matrix functions
 #'
+#' @examples
+#' freq_m <- matrix(ncol=200,
+#'    nrow=96,
+#'    data=seq_len(96*200),
+#'    dimnames=list(frequency=seq(from=1, by=0.2, length.out=96),
+#'       time=seq(from=0, by=0.01, length.out=200)));
+#'
+#' condense_freq_matrix(freq_m, column_fixed_size=10, row_fixed_size=5)[1:20,1:20]
+#'
 #' @export
 condense_freq_matrix <- function
 (x,
  column_n=ncol(x),
+ column_fixed_size=1,
  row_n=nrow(x),
- column_method=c("max", "mean", "min"),
- row_method=c("mean", "max", "min"),
- column_edge=c("full"),
- row_edge=c("half", "full"),
+ row_fixed_size=1,
+ column_method=c("min", "max", "mean"),
+ row_method=c("min", "mean", "max"),
+ column_edge=c("full","half"),
+ row_edge=c("full", "half"),
  column_offset=0,
  row_offset=0,
  column_pad=c(0, 0),
@@ -62,7 +73,7 @@ condense_freq_matrix <- function
    column_pad <- rep(column_pad, length.out=2);
    if (any(column_pad) > 0) {
       if (verbose) {
-         printDebug("condense_freq_matrix(): ",
+         jamba::printDebug("condense_freq_matrix(): ",
             "Processing column_pad:", column_pad);
       }
       xpaddedcols <- unlist(rep(list(1, seq_len(ncol(x)), ncol(x)),
@@ -75,7 +86,7 @@ condense_freq_matrix <- function
    row_pad <- rep(row_pad, length.out=2);
    if (any(row_pad) > 0) {
       if (verbose) {
-         printDebug("condense_freq_matrix(): ",
+         jamba::printDebug("condense_freq_matrix(): ",
             "Processing row_pad:", row_pad);
       }
       xpaddedrows <- unlist(rep(list(1, seq_len(nrow(x)), nrow(x)),
@@ -83,10 +94,10 @@ condense_freq_matrix <- function
       x <- x[xpaddedrows,,drop=FALSE];
    }
 
-   if (column_n < ncol(x)) {
+   if (column_n < ncol(x) || column_fixed_size > 1) {
       ## Condense by column
       if (verbose) {
-         printDebug("condense_matrix(): ",
+         jamba::printDebug("condense_matrix(): ",
             "Condensing from ",
             ncol(x),
             " columns to ",
@@ -98,21 +109,36 @@ condense_freq_matrix <- function
       if ("half" %in% column_edge) {
          col_l <- cutIntoChunks(nameVector(colnames(x)), column_n*2);
       } else {
-         col_l <- cutIntoChunks(nameVector(colnames(x)), column_n);
+         col_l <- cutIntoChunks(nameVector(colnames(x)),
+            n=column_n,
+            fixed_size=column_fixed_size);
       }
+      col_values_l <- lapply(col_l, function(col_i){
+         as.numeric(col_i);
+      });
+      if ("min" %in% column_method) {
+         col_values <- sapply(col_values_l, min);
+      } else if ("max" %in% column_method) {
+         col_values <- sapply(col_values_l, max);
+      } else if ("mean" %in% column_method) {
+         col_values <- sapply(col_values_l, mean);
+      }
+      names(col_values_l) <- col_values;
       col_f <- factor(list2groups(col_l),
          levels=names(col_l));
-      col_names <- rev(colnames(x))[match(unique(col_f), rev(col_f))];
-      col_values <- as.numeric(col_names) + column_offset;
+      #col_names <- rev(colnames(x))[match(unique(col_f), rev(col_f))];
+      #col_values <- as.numeric(col_names) + column_offset;
       x <- t(splicejam::shrinkMatrix(t(x),
          returnClass="matrix",
          groupBy=col_f));
       colnames(x) <- as.character(col_values);
+   } else {
+      col_values_l <- NULL;
    }
-   if (row_n < nrow(x)) {
+   if (row_n < nrow(x) || row_fixed_size > 1) {
       ## Condense by row
       if (verbose) {
-         printDebug("condense_matrix(): ",
+         jamba::printDebug("condense_matrix(): ",
             "Condensing from ",
             nrow(x),
             " rows to ",
@@ -138,11 +164,24 @@ condense_freq_matrix <- function
          row_f <- factor(list2groups(row_l),
             levels=names(row_l));
       } else {
-         row_l <- cutIntoChunks(nameVector(rownames(x)), row_n);
+         row_l <- cutIntoChunks(nameVector(rownames(x)),
+            n=row_n,
+            fixed_size=row_fixed_size);
+         row_values_l <- lapply(row_l, function(row_i){
+            as.numeric(row_i);
+         });
+         if ("min" %in% row_method) {
+            row_values <- sapply(row_values_l, min);
+         } else if ("max" %in% row_method) {
+            row_values <- sapply(row_values_l, max);
+         } else if ("mean" %in% row_method) {
+            row_values <- sapply(row_values_l, mean);
+         }
+         names(row_values_l) <- row_values;
          row_f <- factor(list2groups(row_l),
             levels=names(row_l));
-         row_names <- rev(rownames(x))[match(unique(row_f), rev(row_f))];
-         row_values <- as.numeric(row_names) + row_offset;
+         #row_names <- rev(rownames(x))[match(unique(row_f), rev(row_f))];
+         #row_values <- as.numeric(row_names) + row_offset;
          row_names <- as.character(row_values);
       }
       x <- splicejam::shrinkMatrix(x,
@@ -150,6 +189,7 @@ condense_freq_matrix <- function
          groupBy=row_f);
       rownames(x) <- row_names;
    }
+   attr(x, "col_values_l") <- col_values_l;
    return(x);
 }
 
@@ -216,13 +256,43 @@ discretize_labels <- function
 #' Cut vector into a list of fixed size
 #'
 #' This function provides a basic method to split a vector
-#' into a list of vectors of a known length, with each list element
-#' being roughly the same size.
+#' into a list of vectors of a known length, using one of
+#' two approaches:
 #'
-#' @return `list` of vectors with length `n`.
+#' * when `n` is supplied, the vector is split into `n` bins
+#' with roughly equal number of elements in each bin.
+#' * when `fixed_size` is supplied, the vector is split into
+#' bins with size `fixed_size`, with optional `offset` used to control
+#' the position of the first bin.
+#' * when `n` is supplied and `edge_rule="half"` then the
+#' first and last bin are half-size, with intermediate bins full-size.
+#'
+#' Use `fixed_size` when each bin should be defined by strict unit
+#' values. Use `offset` to control the break points, when the first
+#' element might not fall on an appropriate break.
+#'
+#' Use `n` as a rapid way to bin a vector into `n` roughly equal
+#' pieces.
+#'
+#' Use `n` and `edge_rule="half"` when you want to bin a vector
+#' and want to maintain bins central to unit measures. For example
+#' for the vector `c(1, 1.5, 2, 2.5, 3, 3.5, 4)` if you want 4
+#' bins, centered at each integer value. Note that `fixed_size`
+#' with `offset` might be a better alternative.
+#'
+#' @return `list` of vectors, where each vector is a subset of the
+#' input `x`.
 #'
 #' @param x `vector`, or any R object compatible with `base::split()`.
 #' @param n integer number of list elements to create.
+#' @param fixed_size integer number of values to include in each bin.
+#'    When `fixed_size` is provided, `n` is ignored.
+#' @param edge_rule character value to define how to handle the edges,
+#'    where `"full"` treats every bin the same, and `"half"` makes
+#'    the first bin and last bin half-size, with full-size bins
+#'    in between. The `"half"` approach is recommended in cases
+#'    where you are trying to maintain integer values to represent
+#'    the mean signal around each integer value.
 #' @param ... additional arguments are ignored.
 #'
 #' @family jam matrix functions
@@ -236,14 +306,47 @@ discretize_labels <- function
 cutIntoChunks <- function
 (x,
  n=1,
+ fixed_size=1,
+ offset=0,
+ edge_rule=c("full", "half"),
  ...)
 {
    ## purpose is to split a vector into a list with length n
    ## by evenly distributing x across each group.
-   cut_breaks <- c(0,cumsum(rep(length(x)/n, n))[-n], length(x));
-   x_group <- factor(as.numeric(cut(seq_along(x), breaks=cut_breaks)),
-      levels=seq_len(n));
-   split(x, x_group);
+   edge_rule <- match.arg(edge_rule);
+
+   if (length(fixed_size) > 0 && fixed_size > 1) {
+      offset <- offset %% fixed_size;
+      n_chunks <- ceiling((length(x) + offset) / fixed_size);
+      x_group <- tail(head(
+         rep(seq_len(n_chunks), each=fixed_size),
+         length(x) + offset), length(x));
+      return(split(x, x_group))
+   }
+
+   if ("full" %in% edge_rule || n < 3) {
+      cut_breaks <- round(c(0,cumsum(rep(length(x)/n, n))[-n], length(x)));
+      x_group <- factor(as.numeric(cut(seq_along(x), breaks=cut_breaks)),
+         levels=seq_len(n));
+      split(x, x_group);
+   } else if ("half" %in% edge_rule) {
+      x_l <- cutIntoChunks(x, n=n * 2 - 1);
+      x_first <- head(x_l, 1);
+      x_last <- tail(x_l, 1);
+      x_new <- unlist(tail(head(x_l, -1), -1));
+      x_l2 <- cutIntoChunks(nameVector(x_new), n-2);
+      x_l2_names <- sapply(x_l2, function(i){
+         mean(as.numeric(i))
+      });
+      x_names <- c(as.numeric(head(x_first[[1]], 1)),
+         x_l2_names,
+         as.numeric(tail(x_last[[1]], 1)));
+      x_l <- c(x_first, x_l2, x_last);
+      names(x_l) <- x_names;
+      x_f <- factor(list2groups(x_l),
+         levels=names(x_l));
+      return(x_l);
+   }
 }
 
 #' Convert list to groups
@@ -542,7 +645,7 @@ signal_freq_heatmap <- function
  time_step_sec=NULL,
  freq_step_hz=NULL,
  plot=FALSE,
- type=c("Heatmap", "matrix"),
+ type=c("df", "Heatmap", "matrix"),
  verbose=FALSE,
  ...)
 {
@@ -569,53 +672,60 @@ signal_freq_heatmap <- function
       val <- get(paramname);
       if (length(val) > 0) {
          if (verbose) {
-            printDebug("signal_freq_heatmap(): ",
+            jamba::printDebug("signal_freq_heatmap(): ",
                "Subsetting data for ", paramname, ": ",
                val);
          }
          freq_df <- subset(freq_df, freq_df[[paramname]] %in% val);
       }
    }
-   if (!plot || nrow(freq_df) == 0) {
+   if (nrow(freq_df) == 0) {
+      jamba::printDebug("No rows were returned from the query. Use argument '",
+         "verbose=TRUE",
+         "' to debug.");
+   }
+   if ("df" %in% type) {
       return(freq_df);
    }
    if (nrow(freq_df) > 1) {
-      printDebug("signal_freq_heatmap(): ",
+      jamba::printDebug("signal_freq_heatmap(): ",
          "Data contains ",
          nrow(freq_df),
          " rows. Please reduce query to one row.");
    }
    i <- 1;
-   #HML <- lapply(seq_len(nrow(freq_df)), function(i){
-      ## Get im_json
-      im_json <- dbGetQuery(dbxcon,
-         "SELECT
-         im_json
-         FROM
-         fca_freq_matrix
-         WHERE
-         filename = ? and
-         channel = ? and
-         animal = ? and
-         time_step_sec = ? and
-         freq_step_hz = ?",
-         params=list(
-            freq_df[["filename"]][i],
-            freq_df[["channel"]][i],
-            freq_df[["animal"]][i],
-            freq_df[["time_step_sec"]][i],
-            freq_df[["freq_step_hz"]][i]
-            ))[[1]];
-      if (verbose) {
-         printDebug("signal_freq_heatmap(): ",
-            "Converting im_json with jsonlite::fromJSON().");
-      }
-      im <- jsonlite::fromJSON(im_json);
-      if ("matrix" %in% type) {
-         return(im);
-      }
-      HM <- freq_heatmap(im,
-         ...);
-      return(HM);
-   #});
+
+   ## Get im_json
+   im_json <- dbGetQuery(dbxcon,
+      "SELECT
+      im_json
+      FROM
+      fca_freq_matrix
+      WHERE
+      filename = ? and
+      channel = ? and
+      animal = ? and
+      time_step_sec = ? and
+      freq_step_hz = ?",
+      params=list(
+         freq_df[["filename"]][i],
+         freq_df[["channel"]][i],
+         freq_df[["animal"]][i],
+         freq_df[["time_step_sec"]][i],
+         freq_df[["freq_step_hz"]][i]
+         ))[[1]];
+   if (verbose) {
+      jamba::printDebug("signal_freq_heatmap(): ",
+         "Converting im_json with jsonlite::fromJSON().");
+   }
+   im <- jsonlite::fromJSON(im_json);
+   ## Add attributes to help describe the data
+   attr(im, "df") <- freq_df[i,,drop=FALSE];
+
+   if ("matrix" %in% type) {
+      return(im);
+   }
+   HM <- freq_heatmap(im,
+      ...);
+   return(HM);
 }

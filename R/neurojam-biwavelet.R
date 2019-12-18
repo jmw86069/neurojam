@@ -58,8 +58,15 @@
 #'    when `iWt` is supplied, the matrix is taken directly from it.
 #'    When `m` is supplied as a numeric matrix, it is used
 #'    directly, and `type` is not used.
+#' @param column_fixed_size integer number of columns to include
+#'    in each bin, as one method to condense the output data matrix
+#'    to fewer column values. When `column_fixed_size` is supplied,
+#'    the columns are grouped using this many columns, which is
+#'    preferred when the bins should occur at specific and
+#'    well-defined intervals.
 #' @param x_condense_factor integer value indicating the level
-#'    of compression to condense the numeric matrix, when `return_type`
+#'    of compression to condense the numeric matrix, when
+#'    `column_fixed_size` is not supplied, and when `return_type`
 #'    is either `"m"` or `"list"`. When `x_condense_factor=1` there
 #'    is no compression, otherwise it calls `condense_freq_matrix()`.
 #' @param x_label_multiple integer value indicating the multiple
@@ -85,6 +92,7 @@ calc_ephys_wavelet <- function
  return_type=c("wt", "m", "list"),
  type=c("power.corr.norm", "power",
     "power.corr", "power.norm", "wavelet", "phase"),
+ column_fixed_size=1,
  x_condense_factor=10,
  x_label_multiple=5,
  step=0.001,
@@ -152,7 +160,14 @@ calc_ephys_wavelet <- function
    }
 
    ## Optionally compress the matrix
-   if (x_condense_factor > 1) {
+   if (x_condense_step > 1) {
+      ##
+      iM2 <- condense_freq_matrix(iM,
+         column_fixed_size=column_fixed_size,
+         column_pad=column_pad,
+         row_pad=row_pad,
+         verbose=verbose);
+   } else if (x_condense_factor > 1) {
       ## Check what fraction of time step is represented in the last
       ## time step, if less than min_fraction, drop these rows
       column_n <- round(ncol(iM)/x_condense_factor);

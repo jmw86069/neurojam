@@ -1,3 +1,67 @@
+# version 0.0.9.900
+
+## Coming changes
+
+* There is currently unrest when condensing a numeric matrix
+to smaller size, specifically how to label the resulting bins.
+Previously the labels of each bin were used to determine the
+output -- either taking min, mean, or max. Rounding errors
+are a problem in each case, because of one shortcoming:
+the data does not encode the "step" or "range" covered between
+adjacent labels. One can infer the step by taking average
+distance between adjacent labels, but only when there are
+2 or more labels. A single value is not self-described, for
+example you couldn't answer the question:
+"What span of time is represented by `time=1`"?
+* Bins can be 1-based or 0-based, but must somehow be self-described
+to the underlying range can be known. Once the range is known,
+labeling becomes a secondary, and much easier issue.
+
+## new functions
+
+* `signal_freq_heatmap()` queries the database by animal,
+channel, and optionally the time_step_sec (time step in seconds),
+freq_step_hz (frequency step in Hertz), to retrieve the
+corresponding signal matrix, then produces a heatmap.
+It calls `freq_heatmap()` which provides custom options.
+* `freq_heatmap()` takes a numeric matric, expected to have
+frequency rows, and time columns, and produces a heatmap.
+It has additional customizations:
+
+    * It displays a subset of row and column labels, configurable
+    by `row_label_n` and `column_label_n`.
+    * `row_range`,`column_range` allows selecting a subsection of
+    columns and rows.
+    * `row_split_width` optionally divides rows by fixed number of rows.
+    * `row_split_at` optionally divides rows at fixed positions, using the
+    numeric value of the rowname (in Hertz units).
+    * `row_split_names` allows custom names for each row split, for example
+    `c("low theta", "high theta")`.
+    * `column_split_width`,`column_split_at`,`column_split_names` same
+    as above, for column values.
+    * applies color gradient based upon signal quantile, by default
+    the color range is mapped to 1% through 99%, which usually clips off
+    enough outlier signal.
+    
+
+## changes to existing functions
+
+* `cutIntoChunks()` new argument `fixed_size` will bin the input
+vector into a list of vectors, each of which has length
+`fixed_size`. Optional argument `offset` is used to adjust the
+starting position, so break position can occur at integer
+breaks, for example.
+* `condense_freq_matrix()` new arguments `column_fixed_size` and
+`row_fixed_size` will bin columns and rows by exactly this many
+columns, which is the preferred method to condense a frequency
+matrix, since it provides a specific repeating unit output.
+This method may supercede using `column_pad` and `row_pad`
+which was a previous workaround to have fixed-unit output.
+By default, bins are named by the first value in the bin, and
+include all value up to the next bin label.
+`calc_ephys_wavelet()` new argument `column_fixed_size` passes
+this argument to `condense_freq_matrix()`.
+
 # version 0.0.7.900
 
 ## new functions

@@ -4,25 +4,59 @@
 \alias{cutIntoChunks}
 \title{Cut vector into a list of fixed size}
 \usage{
-cutIntoChunks(x, n = 1, ...)
+cutIntoChunks(x, n = 1, fixed_size = 1, offset = 0,
+  edge_rule = c("full", "half"), ...)
 }
 \arguments{
 \item{x}{\code{vector}, or any R object compatible with \code{base::split()}.}
 
 \item{n}{integer number of list elements to create.}
 
+\item{fixed_size}{integer number of values to include in each bin.
+When \code{fixed_size} is provided, \code{n} is ignored.}
+
+\item{edge_rule}{character value to define how to handle the edges,
+where \code{"full"} treats every bin the same, and \code{"half"} makes
+the first bin and last bin half-size, with full-size bins
+in between. The \code{"half"} approach is recommended in cases
+where you are trying to maintain integer values to represent
+the mean signal around each integer value.}
+
 \item{...}{additional arguments are ignored.}
 }
 \value{
-\code{list} of vectors with length \code{n}.
+\code{list} of vectors, where each vector is a subset of the
+input \code{x}.
 }
 \description{
 Cut vector into a list of fixed size
 }
 \details{
 This function provides a basic method to split a vector
-into a list of vectors of a known length, with each list element
-being roughly the same size.
+into a list of vectors of a known length, using one of
+two approaches:
+\itemize{
+\item when \code{n} is supplied, the vector is split into \code{n} bins
+with roughly equal number of elements in each bin.
+\item when \code{fixed_size} is supplied, the vector is split into
+bins with size \code{fixed_size}, with optional \code{offset} used to control
+the position of the first bin.
+\item when \code{n} is supplied and \code{edge_rule="half"} then the
+first and last bin are half-size, with intermediate bins full-size.
+}
+
+Use \code{fixed_size} when each bin should be defined by strict unit
+values. Use \code{offset} to control the break points, when the first
+element might not fall on an appropriate break.
+
+Use \code{n} as a rapid way to bin a vector into \code{n} roughly equal
+pieces.
+
+Use \code{n} and \code{edge_rule="half"} when you want to bin a vector
+and want to maintain bins central to unit measures. For example
+for the vector \code{c(1, 1.5, 2, 2.5, 3, 3.5, 4)} if you want 4
+bins, centered at each integer value. Note that \code{fixed_size}
+with \code{offset} might be a better alternative.
 }
 \examples{
 x <- 1:170;

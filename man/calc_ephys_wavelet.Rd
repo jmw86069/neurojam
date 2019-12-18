@@ -6,10 +6,10 @@
 \usage{
 calc_ephys_wavelet(x, iWt = NULL, return_type = c("wt", "m", "list"),
   type = c("power.corr.norm", "power", "power.corr", "power.norm",
-  "wavelet", "phase"), x_condense_factor = 10, x_label_multiple = 5,
-  step = 0.001, m = NULL, dj = 1/6, s0 = step * 5,
-  mother = "morlet", do.sig = FALSE, column_pad = c(0, 0),
-  row_pad = c(0, 0), verbose = FALSE, ...)
+  "wavelet", "phase"), column_fixed_size = 1, x_condense_factor = 10,
+  x_label_multiple = 5, step = 0.001, m = NULL, dj = 1/6,
+  s0 = step * 5, mother = "morlet", do.sig = FALSE,
+  column_pad = c(0, 0), row_pad = c(0, 0), verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{numeric matrix with two columns, where the first column
@@ -34,8 +34,16 @@ when \code{iWt} is supplied, the matrix is taken directly from it.
 When \code{m} is supplied as a numeric matrix, it is used
 directly, and \code{type} is not used.}
 
+\item{column_fixed_size}{integer number of columns to include
+in each bin, as one method to condense the output data matrix
+to fewer column values. When \code{column_fixed_size} is supplied,
+the columns are grouped using this many columns, which is
+preferred when the bins should occur at specific and
+well-defined intervals.}
+
 \item{x_condense_factor}{integer value indicating the level
-of compression to condense the numeric matrix, when \code{return_type}
+of compression to condense the numeric matrix, when
+\code{column_fixed_size} is not supplied, and when \code{return_type}
 is either \code{"m"} or \code{"list"}. When \code{x_condense_factor=1} there
 is no compression, otherwise it calls \code{condense_freq_matrix()}.}
 
