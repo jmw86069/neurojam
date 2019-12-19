@@ -7,7 +7,8 @@
 signal_freq_heatmap(dbxcon, animal = NULL, project = NULL,
   phase = NULL, filename = NULL, channel = NULL,
   time_step_sec = NULL, freq_step_hz = NULL, plot = FALSE,
-  type = c("df", "Heatmap", "matrix"), verbose = FALSE, ...)
+  type = c("df", "Heatmap", "matrix"), include_motion = FALSE,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{dbxcon}{DBI database connection}

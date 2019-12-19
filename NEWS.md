@@ -1,21 +1,25 @@
+# version 0.0.10.900
+
+## changes to existing functions
+
+* `signal_freq_heatmap()` new argument `include_motion` will optionally
+include an annotation above the heatmap that shows a barplot of
+animal motion data, in order to show potential concordance between
+neural frequency data and animal motion/freezing behavioral data.
+* Beta testing has begun on a new R class `FreqTimeMatrix` which
+contains a `data.table` numeric matrix. The rows and columns each
+describe the exact range of values represented in each cell. For
+example, the `"time"` columns are labeled by the start time, and
+continue until the next cell start time. When the numeric matrix
+is condensed to longer time steps, the time range increases, and
+is properly represented as a range of times per column. Similarly
+each row represents the frequency start, which continues until the
+next cell frequency start, etc. Methods are being tested, but
+it appears `data.table` offers powerful and extremely fast
+methods for range queries, and aggregate numeric functions.
+
+
 # version 0.0.9.900
-
-## Coming changes
-
-* There is currently unrest when condensing a numeric matrix
-to smaller size, specifically how to label the resulting bins.
-Previously the labels of each bin were used to determine the
-output -- either taking min, mean, or max. Rounding errors
-are a problem in each case, because of one shortcoming:
-the data does not encode the "step" or "range" covered between
-adjacent labels. One can infer the step by taking average
-distance between adjacent labels, but only when there are
-2 or more labels. A single value is not self-described, for
-example you couldn't answer the question:
-"What span of time is represented by `time=1`"?
-* Bins can be 1-based or 0-based, but must somehow be self-described
-to the underlying range can be known. Once the range is known,
-labeling becomes a secondary, and much easier issue.
 
 ## new functions
 
@@ -43,7 +47,6 @@ It has additional customizations:
     the color range is mapped to 1% through 99%, which usually clips off
     enough outlier signal.
     
-
 ## changes to existing functions
 
 * `cutIntoChunks()` new argument `fixed_size` will bin the input
@@ -61,6 +64,24 @@ By default, bins are named by the first value in the bin, and
 include all value up to the next bin label.
 `calc_ephys_wavelet()` new argument `column_fixed_size` passes
 this argument to `condense_freq_matrix()`.
+
+## Coming changes
+
+* There is currently unrest when condensing a numeric matrix
+to smaller size, specifically how to label the resulting bins.
+Previously the labels of each bin were used to determine the
+output -- either taking min, mean, or max. Rounding errors
+are a problem in each case, because of one shortcoming:
+the data does not encode the "step" or "range" covered between
+adjacent labels. One can infer the step by taking average
+distance between adjacent labels, but only when there are
+2 or more labels. A single value is not self-described, for
+example you couldn't answer the question:
+"What span of time is represented by `time=1`"?
+* Bins can be 1-based or 0-based, but must somehow be self-described
+to the underlying range can be known. Once the range is known,
+labeling becomes a secondary, and much easier issue.
+
 
 # version 0.0.7.900
 

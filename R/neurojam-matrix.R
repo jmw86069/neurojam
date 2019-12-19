@@ -474,6 +474,7 @@ freq_heatmap <- function
  column_split_width=NULL,
  column_split_at=NULL,
  column_split_names=NULL,
+ top_annotation=NULL,
  border=TRUE,
  row_title_rot=0,
  name="psd",
@@ -556,6 +557,9 @@ freq_heatmap <- function
       column_keep <- (as.numeric(xcolnames) >= min(column_range) &
             as.numeric(xcolnames) <= max(column_range));
       x <- x[,column_keep,drop=FALSE];
+      if (length(top_annotation) > 0) {
+         top_annotation <- top_annotation[column_keep,];
+      }
       xcolnames <- xcolnames[column_keep]
       column_split <- column_split[column_keep];
    }
@@ -573,6 +577,7 @@ freq_heatmap <- function
       name=name,
       cluster_rows=FALSE,
       cluster_columns=FALSE,
+      top_annotation=top_annotation,
       row_labels=discretize_labels(xrownames,
          pretty.n=row_label_n),
       column_labels=discretize_labels(xcolnames,
@@ -646,6 +651,7 @@ signal_freq_heatmap <- function
  freq_step_hz=NULL,
  plot=FALSE,
  type=c("df", "Heatmap", "matrix"),
+ include_motion=FALSE,
  verbose=FALSE,
  ...)
 {
@@ -722,10 +728,54 @@ signal_freq_heatmap <- function
    ## Add attributes to help describe the data
    attr(im, "df") <- freq_df[i,,drop=FALSE];
 
+   ## Optionally get motion data
+   if (include_motion) {
+      if (verbose) {
+         jamba::printDebug("signal_freq_heatmap(): ",
+            "Loading motion data.");
+      }
+      motion_df <- dbGetQuery(dbxcon,
+         "SELECT
+         animal,phase,time_sec,freeze_cnt
+         FROM
+         animal_motion_data
+         WHERE
+         animal = ? and
+         time_step_sec = ? and
+         phase = ?",
+         params=list(
+            freq_df[["animal"]][i],
+            freq_df[["time_step_sec"]][i],
+            freq_df[["phase"]][i]
+         ));
+      im_column_values <- round(as.numeric(colnames(im)));
+      im_match <- match(im_column_values, motion_df$time_sec);
+      #im_motion <- rmNA(motion_df$freeze_cnt[im_match], 0);
+      im_motion <- motion_df$freeze_cnt[im_match];
+      names(im_motion) <- colnames(im);
+      if (verbose) {
+         jamba::printDebug("signal_freq_heatmap(): ",
+            "table(im_motion):");
+         print(table(im_motion, useNA="ifany"));
+      }
+      top_annotation <- HeatmapAnnotation(
+         freeze_cnt=anno_barplot(im_motion)
+      );
+   } else {
+      top_annotation <- NULL;
+   }
+
    if ("matrix" %in% type) {
       return(im);
    }
+   column_title <- paste0(freq_df[["animal"]][i],
+      " (", freq_df[["phase"]][i],
+      ", ",
+      freq_df[["channel"]][i], ")");
+
    HM <- freq_heatmap(im,
+      top_annotation=top_annotation,
+      column_title=column_title,
       ...);
    return(HM);
 }

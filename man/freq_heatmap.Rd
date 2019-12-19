@@ -10,8 +10,8 @@ freq_heatmap(x, quantile_max = 0.99, col = jamba::getColorRamp("Reds",
   row_split = NULL, row_split_width = NULL, row_split_at = NULL,
   row_split_names = NULL, column_split = NULL,
   column_split_width = NULL, column_split_at = NULL,
-  column_split_names = NULL, border = TRUE, row_title_rot = 0,
-  name = "psd", ...)
+  column_split_names = NULL, top_annotation = NULL, border = TRUE,
+  row_title_rot = 0, name = "psd", ...)
 }
 \arguments{
 \item{x}{numeric matrix containing frequency rows, and time
