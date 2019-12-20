@@ -614,6 +614,23 @@ freq_heatmap <- function
 #' @param type character value indicating the type of output, where
 #'    `"Heatmap"` will return the Heatmap object; and `"matrix"` will
 #'    return the numeric matrix itself, and not the heatmap.
+#' @param include_motion logical indicating whether to query the database
+#'    for table `"animal_motion_data"` to retrieve motion data for the
+#'    given `animal` and `phase`. When the database table exists,
+#'    `top_annotation` will be created using
+#'    `ComplexHeatmap::anno_barplot()` to produce a barplot at the
+#'    top of the heatmap. For more customization, use `top_annotation`.
+#' @param motion_table,motion_value_column optional character strings with
+#'    the database table and table column to use to retrieve motion
+#'    data. Note that the table is expected to contain columns:
+#'    `"animal","phase","time_sec"` as well as the `motion_value_column`.
+#'    The `"time_sec"` values are expected to match the time values
+#'    in the `"fca_freq_matrix"` table.
+#' @param top_annotation optional `HeatmapAnnotation` object as produced
+#'    by `ComplexHeatmap::HeatmapAnnotation()`, suitably aligned with
+#'    the columns of data included in the heatmap. This annotation
+#'    will be subsetted by `freq_heatmap()` as relevant when
+#'    `column_range` is passed to that function.
 #' @param verbose logical indicating whether to print verbose output.
 #' @param ... additional arguments are passed to `freq_heatmap()`,
 #'    see that function documentation for info on customizing the
@@ -650,8 +667,11 @@ signal_freq_heatmap <- function
  time_step_sec=NULL,
  freq_step_hz=NULL,
  plot=FALSE,
- type=c("df", "Heatmap", "matrix"),
+ type=c("df", "hm", "Heatmap", "matrix", "m"),
  include_motion=FALSE,
+ motion_table="animal_motion_data",
+ motion_column="freeze_cnt",
+ top_annotation=NULL,
  verbose=FALSE,
  ...)
 {
@@ -729,7 +749,7 @@ signal_freq_heatmap <- function
    attr(im, "df") <- freq_df[i,,drop=FALSE];
 
    ## Optionally get motion data
-   if (include_motion) {
+   if (include_motion && dbExistsTable(dbxcon, "animal_motion_data")) {
       if (verbose) {
          jamba::printDebug("signal_freq_heatmap(): ",
             "Loading motion data.");
@@ -761,11 +781,9 @@ signal_freq_heatmap <- function
       top_annotation <- HeatmapAnnotation(
          freeze_cnt=anno_barplot(im_motion)
       );
-   } else {
-      top_annotation <- NULL;
    }
 
-   if ("matrix" %in% type) {
+   if (any(c("m", "matrix") %in% type)) {
       return(im);
    }
    column_title <- paste0(freq_df[["animal"]][i],

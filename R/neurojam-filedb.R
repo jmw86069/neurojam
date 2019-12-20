@@ -1010,3 +1010,109 @@ calculate_wavelet_matrix <- function
    iM2normal;
 }
 
+#' Display neurojam database table schema
+#'
+#' Display neurojam database table schema
+#'
+#' This function uses the `datamodelr` R package (if installed)
+#' to produce a database table schema diagram showing the overall
+#' database table structure, and intended field joins between tables.
+#'
+#' @param dbxcon database connection
+#' @param rankdir character value passed to
+#'    `datamodelr::dm_create_graph`.
+#' @param apply_segments logical indicating whether tables should
+#'    be grouped into segments.
+#' @param ... additional arguments are ignored.
+#'
+#' @export
+display_neurojam_schema <- function
+(dbxcon,
+ rankdir="BT",
+ apply_segments=FALSE,
+ ...)
+{
+   #
+   if (!suppressPackageStartupMessages(require(rlang))) {
+      stop("The rlang package is required.");
+   }
+   if (!suppressPackageStartupMessages(require(datamodelr))) {
+      printDebug(c("The datamodelr package is required",
+         " available from github::bergant/datamodelr", " install with:"),
+         'remotes::install_github("bergant/datamodelr")');
+      stop("The datamodelr package is required.");
+   }
+   ephysdb_dfs3 <- lapply(nameVector(unvigrep("_view", dbListTables(dbxcon))), function(i){
+      j <- sqlite_desc(dbxcon, i);
+      j$type <- gsub("$", "   ",
+         gsub("[,].+$", "", j$type));
+      j;
+   });
+   ephysdb_dfs4 <- renameColumn(rbindList(ephysdb_dfs3)[,c("column", "type", "table", "index")],
+      from="index",
+      to="key");
+   ephysdb_dm <- datamodelr::as.data_model(ephysdb_dfs4);
+
+   ## base tables:
+   ## filename  -> ephys_file
+   ## channel   -> file_channel
+   ## animal    -> ephys_animal
+   ## event_num -> file_event
+   ## project   -> ephys_file
+   ##
+   base_fields <- c(filename="ephys_file",
+      project="ephys_file",
+      phase="ephys_file",
+      channel="file_channel",
+      animal="ephys_animal",
+      event_num="file_event",
+      time_step_sec="animal_motion_data");
+
+   dbrefs <- unlist(recursive=FALSE,
+      lapply(names(base_fields), function(i){
+      j <- subset(ephysdb_dfs4, column %in% i &
+            #!grepl("fc[ae]", table) &
+            !table %in% base_fields[i]);
+      p <- lapply(seq_along(j$table), function(k){
+         t1 <- sym(j$table[k]);
+         c1 <- sym(j$column[k]);
+         t2 <- sym(base_fields[i]);
+         expr1 <- expr(`$`(!!t1, !!c1));
+         expr2 <- expr(`$`(!!t2, !!c1));
+         expr12 <- expr(`==`(!!expr1, !!expr2));
+         expr12;
+      })
+   }));
+   ephysdb_dm <- do.call(datamodelr::dm_add_references,
+      c(alist(ephysdb_dm),
+         dbrefs));
+
+   ## Colorize groups of tables
+   ephysdb_groups <- provigrep(c(base_tables="ephys_|motion", imported_tables="^file_", derived_tables="."),
+      returnType="list",
+      names(ephysdb_dfs3));
+   my_colors <- nameVector(closestRcolor(rainbowJam(length(ephysdb_groups))));
+   my_colors_l <- lapply(my_colors, function(i){
+      j <- unname(color2gradient(i, n=5, gradientWtFactor=1.5));
+      list(
+         line_color=j[3],
+         header_bgcolor=j[3],
+         header_font=setTextContrastColor(j[3]),
+         bgcolor=j[1]
+      )
+   })
+   dm_add_colors(my_colors_l);
+   if (apply_segments) {
+      ephysdb_dm <- datamodelr::dm_set_segment(ephysdb_dm,
+         ephysdb_groups);
+   }
+   ephysdb_dm <- datamodelr::dm_set_display(ephysdb_dm,
+      nameVector(ephysdb_groups, my_colors)
+   );
+
+   ephysdb_dmg <- datamodelr::dm_create_graph(ephysdb_dm,
+      rankdir=rankdir,
+      col_attr=c("column", "type"));
+   datamodelr::dm_render_graph(ephysdb_dmg);
+}
+

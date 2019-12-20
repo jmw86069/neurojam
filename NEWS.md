@@ -1,3 +1,21 @@
+# version 0.0.11.900
+
+## changes to existing functions
+
+* `signal_freq_heatmap()` new arguments `motion_table`,`motion_column`
+intended when `include_motion=TRUE`, they define the database table
+and column to use for motion data.
+* `signal_freq_heatmap()` new argument `top_annotation` to supply a
+specific `ComplexHeatmap::HeatmapAnnotation()` for the top of the
+heatmap. It is passed to `freq_heatmap()` which handles optional
+subsetting of the heatmap columns, keeping the annotation in proper
+order.
+
+## new functions
+
+* `display_neurojam_schema()` requires optional R package `datamodelr`,
+and displays a table schema diagram representing the neurojam database.
+
 # version 0.0.10.900
 
 ## changes to existing functions

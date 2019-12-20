@@ -7,7 +7,9 @@
 signal_freq_heatmap(dbxcon, animal = NULL, project = NULL,
   phase = NULL, filename = NULL, channel = NULL,
   time_step_sec = NULL, freq_step_hz = NULL, plot = FALSE,
-  type = c("df", "Heatmap", "matrix"), include_motion = FALSE,
+  type = c("df", "hm", "Heatmap", "matrix", "m"),
+  include_motion = FALSE, motion_table = "animal_motion_data",
+  motion_column = "freeze_cnt", top_annotation = NULL,
   verbose = FALSE, ...)
 }
 \arguments{
@@ -25,6 +27,26 @@ the database.}
 \item{type}{character value indicating the type of output, where
 \code{"Heatmap"} will return the Heatmap object; and \code{"matrix"} will
 return the numeric matrix itself, and not the heatmap.}
+
+\item{include_motion}{logical indicating whether to query the database
+for table \code{"animal_motion_data"} to retrieve motion data for the
+given \code{animal} and \code{phase}. When the database table exists,
+\code{top_annotation} will be created using
+\code{ComplexHeatmap::anno_barplot()} to produce a barplot at the
+top of the heatmap. For more customization, use \code{top_annotation}.}
+
+\item{motion_table, motion_value_column}{optional character strings with
+the database table and table column to use to retrieve motion
+data. Note that the table is expected to contain columns:
+\code{"animal","phase","time_sec"} as well as the \code{motion_value_column}.
+The \code{"time_sec"} values are expected to match the time values
+in the \code{"fca_freq_matrix"} table.}
+
+\item{top_annotation}{optional \code{HeatmapAnnotation} object as produced
+by \code{ComplexHeatmap::HeatmapAnnotation()}, suitably aligned with
+the columns of data included in the heatmap. This annotation
+will be subsetted by \code{freq_heatmap()} as relevant when
+\code{column_range} is passed to that function.}
 
 \item{verbose}{logical indicating whether to print verbose output.}
 
