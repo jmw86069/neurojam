@@ -523,6 +523,10 @@ freq_heatmap <- function
          column_split <- factor(column_split,
             levels=unique(column_split));
          names(column_split) <- xcolnames;
+         ## top annotation colors
+         top_annotation_1 <- HeatmapAnnotation(
+            event=anno_block(gp=gpar(fill=colorjam::rainbowJam(4)))
+         );
       }
    }
 
@@ -672,6 +676,8 @@ signal_freq_heatmap <- function
  motion_table="animal_motion_data",
  motion_column="freeze_cnt",
  top_annotation=NULL,
+ column_block_num=4,
+ column_block_labels=NULL,
  verbose=FALSE,
  ...)
 {
@@ -779,7 +785,12 @@ signal_freq_heatmap <- function
          print(table(im_motion, useNA="ifany"));
       }
       top_annotation <- HeatmapAnnotation(
-         freeze_cnt=anno_barplot(im_motion)
+         freeze_cnt=anno_barplot(im_motion),
+         event=anno_block(gp=gpar(fill=colorjam::rainbowJam(column_block_num)),
+            labels=column_block_labels,
+            labels_gp=gpar(col=setTextContrastColor(colorjam::rainbowJam(column_block_num),
+               useGrey=15),
+               fontsize=10))
       );
    }
 
