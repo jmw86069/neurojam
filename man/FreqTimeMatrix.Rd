@@ -4,11 +4,21 @@
 \alias{FreqTimeMatrix}
 \title{Create FreqTimeMatrix numeric matrix with frequency rows and time columns}
 \usage{
-FreqTimeMatrix(x, row_units = "Hz", row_title = "frequency",
-  row_starts = as.numeric(rownames(x)), row_ends = NULL,
-  row_step = NULL, column_title = "time", column_units = "sec",
-  column_starts = as.numeric(colnames(x)), column_ends = NULL,
-  column_step = NULL, verbose = FALSE, ...)
+FreqTimeMatrix(
+  x,
+  row_units = "Hz",
+  row_title = "frequency",
+  row_starts = as.numeric(rownames(x)),
+  row_ends = NULL,
+  row_step = NULL,
+  column_title = "time",
+  column_units = "sec",
+  column_starts = as.numeric(colnames(x)),
+  column_ends = NULL,
+  column_step = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \description{
 Create FreqTimeMatrix numeric matrix with frequency rows and time columns

@@ -4,12 +4,25 @@
 \alias{calc_ephys_wavelet}
 \title{Calculate wavelet transformation}
 \usage{
-calc_ephys_wavelet(x, iWt = NULL, return_type = c("wt", "m", "list"),
-  type = c("power.corr.norm", "power", "power.corr", "power.norm",
-  "wavelet", "phase"), column_fixed_size = 1, x_condense_factor = 10,
-  x_label_multiple = 5, step = 0.001, m = NULL, dj = 1/6,
-  s0 = step * 5, mother = "morlet", do.sig = FALSE,
-  column_pad = c(0, 0), row_pad = c(0, 0), verbose = FALSE, ...)
+calc_ephys_wavelet(
+  x,
+  iWt = NULL,
+  return_type = c("wt", "m", "list"),
+  type = c("power.corr.norm", "power", "power.corr", "power.norm", "wavelet", "phase"),
+  column_fixed_size = 1,
+  x_condense_factor = 10,
+  x_label_multiple = 5,
+  step = 0.001,
+  m = NULL,
+  dj = 1/6,
+  s0 = step * 5,
+  mother = "morlet",
+  do.sig = FALSE,
+  column_pad = c(0, 0),
+  row_pad = c(0, 0),
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{numeric matrix with two columns, where the first column
@@ -109,6 +122,7 @@ case, \code{biwavelet::wt()} is not necessary and may
 be substantially faster.
 }
 \seealso{
-Other jam wavelet functions: \code{\link{plot_ephys_wavelet}}
+Other jam wavelet functions: 
+\code{\link{plot_ephys_wavelet}()}
 }
 \concept{jam wavelet functions}

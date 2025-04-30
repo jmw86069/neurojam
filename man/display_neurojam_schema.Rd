@@ -4,8 +4,18 @@
 \alias{display_neurojam_schema}
 \title{Display neurojam database table schema}
 \usage{
-display_neurojam_schema(dbxcon, rankdir = "BT", apply_segments = FALSE,
-  ...)
+display_neurojam_schema(dbxcon, rankdir = "BT", apply_segments = FALSE, ...)
+}
+\arguments{
+\item{dbxcon}{database connection}
+
+\item{rankdir}{character value passed to
+\code{datamodelr::dm_create_graph}.}
+
+\item{apply_segments}{logical indicating whether tables should
+be grouped into segments.}
+
+\item{...}{additional arguments are ignored.}
 }
 \description{
 Display neurojam database table schema

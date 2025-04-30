@@ -4,22 +4,37 @@
 \alias{plot_ephys_wavelet}
 \title{Plot Ephys wavelet data}
 \usage{
-plot_ephys_wavelet(x, iWt = NULL, style = c("default", "jam", "CH"),
-  type = c("power.corr.norm", "power", "power.corr", "power.norm",
-  "wavelet", "phase"), plot.coi = FALSE, plot.cb = FALSE,
-  plot.phase = FALSE, plot.sig = FALSE, col.coi = "grey30",
+plot_ephys_wavelet(
+  x,
+  iWt = NULL,
+  style = c("default", "jam", "CH"),
+  type = c("power.corr.norm", "power", "power.corr", "power.norm", "wavelet", "phase"),
+  plot.coi = FALSE,
+  plot.cb = FALSE,
+  plot.phase = FALSE,
+  plot.sig = FALSE,
+  col.coi = "grey30",
   fill.cols = warpRamp(getColorRamp("RdBu_r"), lens = 2),
-  ylim = rev(2^c(0, -6)), arrow.col = "green4", col = "RdBu_r",
-  freq_lim = NULL, i_step = 0.001, x_compress_factor = 10,
-  do_plot = TRUE, m = NULL, ...)
+  ylim = rev(2^c(0, -6)),
+  arrow.col = "green4",
+  col = "RdBu_r",
+  freq_lim = NULL,
+  i_step = 0.001,
+  x_compress_factor = 10,
+  do_plot = TRUE,
+  m = NULL,
+  ...
+)
 }
 \description{
 Plot Ephys wavelet data
 }
 \seealso{
-Other jam wavelet functions: \code{\link{calc_ephys_wavelet}}
+Other jam wavelet functions: 
+\code{\link{calc_ephys_wavelet}()}
 
-Other jam plot functions: \code{\link{plot_ephys_event_data}}
+Other jam plot functions: 
+\code{\link{plot_ephys_event_data}()}
 }
 \concept{jam plot functions}
 \concept{jam wavelet functions}

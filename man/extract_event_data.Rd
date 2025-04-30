@@ -4,12 +4,23 @@
 \alias{extract_event_data}
 \title{Extract animal event data from raw data}
 \usage{
-extract_event_data(con, animal = NULL, project = NULL, phase = NULL,
-  source_filename = NULL, source_dirname = NULL,
-  rdata_filename = NULL, rdata_dirname = NULL,
-  animal_raw_data_table = "animal_raw_data", event_prestart = 4,
-  event_poststop = 4, return_baseline = FALSE,
-  base_max_duration = NULL, verbose = FALSE, ...)
+extract_event_data(
+  con,
+  animal = NULL,
+  project = NULL,
+  phase = NULL,
+  source_filename = NULL,
+  source_dirname = NULL,
+  rdata_filename = NULL,
+  rdata_dirname = NULL,
+  animal_raw_data_table = "animal_raw_data",
+  event_prestart = 4,
+  event_poststop = 4,
+  return_baseline = FALSE,
+  base_max_duration = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{con}{database connection with class \code{DBIConnection},
@@ -40,7 +51,7 @@ independent time step.}
 \item{return_baseline}{logical indicating whether to
 define a \code{"baseline"} event which contains the signal
 prior to the first event. Note that the baseline is
-not extended using \code{event_prestart,event_poststop}.}
+not extended using \verb{event_prestart,event_poststop}.}
 
 \item{verbose}{logical indicating whether to print verbose output.}
 
@@ -83,14 +94,16 @@ therefore suitable to send to \code{save_animal_event_data()}
 so the events can be stored without conflict.
 }
 \seealso{
-Other jam database functions: \code{\link{ephys_short_name}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}},
-  \code{\link{save_animal_event_derived}},
-  \code{\link{save_animal_raw_data}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
-  \code{\link{sqlite_view}}
+Other jam database functions: 
+\code{\link{ephys_short_name}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_data}()},
+\code{\link{save_animal_event_derived}()},
+\code{\link{save_animal_raw_data}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()},
+\code{\link{sqlite_view}()}
 }
 \concept{jam database functions}

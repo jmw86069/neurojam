@@ -4,8 +4,13 @@
 \alias{ephys_short_name}
 \title{Make Ephys short name}
 \usage{
-ephys_short_name(x, max_nchar_word = 4, word_pattern = "[a-zA-Z0-9]",
-  remove_extension = TRUE, ...)
+ephys_short_name(
+  x,
+  max_nchar_word = 4,
+  word_pattern = "[a-zA-Z0-9]",
+  remove_extension = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{character vector to be modified to a short name.}
@@ -39,14 +44,16 @@ ephys_short_name(x);
 
 }
 \seealso{
-Other jam database functions: \code{\link{extract_event_data}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}},
-  \code{\link{save_animal_event_derived}},
-  \code{\link{save_animal_raw_data}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
-  \code{\link{sqlite_view}}
+Other jam database functions: 
+\code{\link{extract_event_data}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_data}()},
+\code{\link{save_animal_event_derived}()},
+\code{\link{save_animal_raw_data}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()},
+\code{\link{sqlite_view}()}
 }
 \concept{jam database functions}

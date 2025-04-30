@@ -4,10 +4,17 @@
 \alias{import_ephys_mat}
 \title{Import Plexon MatLab data}
 \usage{
-import_ephys_mat(mat_files_use, animal = NULL, phase = NULL,
+import_ephys_mat(
+  mat_files_use,
+  animal = NULL,
+  phase = NULL,
   channels_per_animal = 5,
   channels_to_retain = seq_len(channels_per_animal - 1),
-  drop_unused_channels = TRUE, do_plot = FALSE, verbose = FALSE, ...)
+  drop_unused_channels = TRUE,
+  do_plot = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{mat_files_use}{data.frame containing columns described
@@ -65,6 +72,7 @@ experimental phases.
 }
 }
 \seealso{
-Other jam import functions: \code{\link{import_ephys_mat_1}}
+Other jam import functions: 
+\code{\link{import_ephys_mat_1}()}
 }
 \concept{jam import functions}

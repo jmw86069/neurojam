@@ -4,13 +4,26 @@
 \alias{signal_freq_heatmap}
 \title{Heatmap of frequency-time matrix for animal signal data}
 \usage{
-signal_freq_heatmap(dbxcon, animal = NULL, project = NULL,
-  phase = NULL, filename = NULL, channel = NULL,
-  time_step_sec = NULL, freq_step_hz = NULL, plot = FALSE,
+signal_freq_heatmap(
+  dbxcon,
+  animal = NULL,
+  project = NULL,
+  phase = NULL,
+  filename = NULL,
+  channel = NULL,
+  time_step_sec = NULL,
+  freq_step_hz = NULL,
+  plot = FALSE,
   type = c("df", "hm", "Heatmap", "matrix", "m"),
-  include_motion = FALSE, motion_table = "animal_motion_data",
-  motion_column = "freeze_cnt", top_annotation = NULL,
-  verbose = FALSE, ...)
+  include_motion = FALSE,
+  motion_table = "animal_motion_data",
+  motion_column = "freeze_cnt",
+  top_annotation = NULL,
+  column_block_num = 4,
+  column_block_labels = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{dbxcon}{DBI database connection}
@@ -38,7 +51,7 @@ top of the heatmap. For more customization, use \code{top_annotation}.}
 \item{motion_table, motion_value_column}{optional character strings with
 the database table and table column to use to retrieve motion
 data. Note that the table is expected to contain columns:
-\code{"animal","phase","time_sec"} as well as the \code{motion_value_column}.
+\verb{"animal","phase","time_sec"} as well as the \code{motion_value_column}.
 The \code{"time_sec"} values are expected to match the time values
 in the \code{"fca_freq_matrix"} table.}
 
@@ -83,13 +96,15 @@ calls \code{freq_heatmap()} to create the heatmap.
 
 }
 \seealso{
-Other jam matrix functions: \code{\link{condense_freq_matrix}},
-  \code{\link{cutIntoChunks}},
-  \code{\link{discretize_labels}},
-  \code{\link{freq_heatmap}}
+Other jam matrix functions: 
+\code{\link{condense_freq_matrix}()},
+\code{\link{cutIntoChunks}()},
+\code{\link{discretize_labels}()},
+\code{\link{freq_heatmap}()}
 
-Other jam heatmap functions: \code{\link{discretize_labels}},
-  \code{\link{freq_heatmap}}
+Other jam heatmap functions: 
+\code{\link{discretize_labels}()},
+\code{\link{freq_heatmap}()}
 }
 \concept{jam heatmap functions}
 \concept{jam matrix functions}

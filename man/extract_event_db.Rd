@@ -4,11 +4,22 @@
 \alias{extract_event_db}
 \title{Extract animal event data from database}
 \usage{
-extract_event_db(con, filename = NULL, file_table = "ephys_file",
-  file_event_table = "file_event", file_channel_table = "file_channel",
-  file_channel_event_table = "file_channel_event", event_prestart = 4,
-  event_poststop = 4, event_type = "event", default_event_diff = 40,
-  load_db = TRUE, reuse_db = TRUE, verbose = FALSE, ...)
+extract_event_db(
+  con,
+  filename = NULL,
+  file_table = "ephys_file",
+  file_event_table = "file_event",
+  file_channel_table = "file_channel",
+  file_channel_event_table = "file_channel_event",
+  event_prestart = 4,
+  event_poststop = 4,
+  event_type = "event",
+  default_event_diff = 40,
+  load_db = TRUE,
+  reuse_db = TRUE,
+  verbose = FALSE,
+  ...
+)
 }
 \description{
 Extract animal event data from database

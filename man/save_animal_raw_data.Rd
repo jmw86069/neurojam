@@ -4,11 +4,21 @@
 \alias{save_animal_raw_data}
 \title{Save raw signal data per animal}
 \usage{
-save_animal_raw_data(mat_l, con, animal, project, phase = "",
-  source_filename = "", source_dirname = "", rdata_filename = NULL,
+save_animal_raw_data(
+  mat_l,
+  con,
+  animal,
+  project,
+  phase = "",
+  source_filename = "",
+  source_dirname = "",
+  rdata_filename = NULL,
   rdata_dirname = "animal_rdata",
-  animal_raw_data_table = "animal_raw_data", overwrite = FALSE,
-  verbose = FALSE, ...)
+  animal_raw_data_table = "animal_raw_data",
+  overwrite = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{mat_l}{\code{list} object output from \code{import_ephys_mat_1()}
@@ -96,14 +106,16 @@ con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:");
 
 }
 \seealso{
-Other jam database functions: \code{\link{ephys_short_name}},
-  \code{\link{extract_event_data}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}},
-  \code{\link{save_animal_event_derived}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
-  \code{\link{sqlite_view}}
+Other jam database functions: 
+\code{\link{ephys_short_name}()},
+\code{\link{extract_event_data}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_data}()},
+\code{\link{save_animal_event_derived}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()},
+\code{\link{sqlite_view}()}
 }
 \concept{jam database functions}

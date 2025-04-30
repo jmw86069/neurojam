@@ -4,17 +4,26 @@
 \alias{plot_ephys_event_data}
 \title{Plot Ephys event data}
 \usage{
-plot_ephys_event_data(mat_l, channel, plot_which = c("all", "events",
-  "total"), nbin = 512, bandwidthN = 5000, do_par = TRUE,
-  verbose = FALSE, ...)
+plot_ephys_event_data(
+  mat_l,
+  channel,
+  plot_which = c("all", "events", "total"),
+  nbin = 512,
+  bandwidthN = 5000,
+  do_par = TRUE,
+  verbose = FALSE,
+  ...
+)
 }
 \description{
 Plot Ephys event data
 }
 \seealso{
-Other jam event functions: \code{\link{get_ephys_event_data}}
+Other jam event functions: 
+\code{\link{get_ephys_event_data}()}
 
-Other jam plot functions: \code{\link{plot_ephys_wavelet}}
+Other jam plot functions: 
+\code{\link{plot_ephys_wavelet}()}
 }
 \concept{jam event functions}
 \concept{jam plot functions}

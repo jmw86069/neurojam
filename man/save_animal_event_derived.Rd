@@ -4,10 +4,24 @@
 \alias{save_animal_event_derived}
 \title{Save animal event derived results}
 \usage{
-save_animal_event_derived(con, animal, project, phase, step, channel,
-  event, event_prestart, event_poststop, derived_data, derived_type,
-  derived_extra, animal_event_derived_table = "animal_event_derived",
-  dryrun = FALSE, verbose = FALSE, ...)
+save_animal_event_derived(
+  con,
+  animal,
+  project,
+  phase,
+  step,
+  channel,
+  event,
+  event_prestart,
+  event_poststop,
+  derived_data,
+  derived_type,
+  derived_extra,
+  animal_event_derived_table = "animal_event_derived",
+  dryrun = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{con}{database connection with class \code{DBIConnection},
@@ -55,14 +69,16 @@ after which the results are stored in a database table
 for later use.
 }
 \seealso{
-Other jam database functions: \code{\link{ephys_short_name}},
-  \code{\link{extract_event_data}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}},
-  \code{\link{save_animal_raw_data}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
-  \code{\link{sqlite_view}}
+Other jam database functions: 
+\code{\link{ephys_short_name}()},
+\code{\link{extract_event_data}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_data}()},
+\code{\link{save_animal_raw_data}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()},
+\code{\link{sqlite_view}()}
 }
 \concept{jam database functions}

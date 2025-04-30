@@ -4,14 +4,29 @@
 \alias{freq_heatmap}
 \title{Heatmap of frequency-time (psd) matrix}
 \usage{
-freq_heatmap(x, quantile_max = 0.99, col = jamba::getColorRamp("Reds",
-  lens = 2, n = 25), row_label_n = 25, column_label_n = 25,
-  row_range = NULL, column_range = NULL, flip = c("y"),
-  row_split = NULL, row_split_width = NULL, row_split_at = NULL,
-  row_split_names = NULL, column_split = NULL,
-  column_split_width = NULL, column_split_at = NULL,
-  column_split_names = NULL, top_annotation = NULL, border = TRUE,
-  row_title_rot = 0, name = "psd", ...)
+freq_heatmap(
+  x,
+  quantile_max = 0.99,
+  col = jamba::getColorRamp("Reds", lens = 2, n = 25),
+  row_label_n = 25,
+  column_label_n = 25,
+  row_range = NULL,
+  column_range = NULL,
+  flip = c("y"),
+  row_split = NULL,
+  row_split_width = NULL,
+  row_split_at = NULL,
+  row_split_names = NULL,
+  column_split = NULL,
+  column_split_width = NULL,
+  column_split_at = NULL,
+  column_split_names = NULL,
+  top_annotation = NULL,
+  border = TRUE,
+  row_title_rot = 0,
+  name = "psd",
+  ...
+)
 }
 \arguments{
 \item{x}{numeric matrix containing frequency rows, and time
@@ -115,13 +130,15 @@ to split rows and columns, as needed.
 
 }
 \seealso{
-Other jam matrix functions: \code{\link{condense_freq_matrix}},
-  \code{\link{cutIntoChunks}},
-  \code{\link{discretize_labels}},
-  \code{\link{signal_freq_heatmap}}
+Other jam matrix functions: 
+\code{\link{condense_freq_matrix}()},
+\code{\link{cutIntoChunks}()},
+\code{\link{discretize_labels}()},
+\code{\link{signal_freq_heatmap}()}
 
-Other jam heatmap functions: \code{\link{discretize_labels}},
-  \code{\link{signal_freq_heatmap}}
+Other jam heatmap functions: 
+\code{\link{discretize_labels}()},
+\code{\link{signal_freq_heatmap}()}
 }
 \concept{jam heatmap functions}
 \concept{jam matrix functions}

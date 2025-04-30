@@ -4,10 +4,22 @@
 \alias{calculate_wavelet_matrix}
 \title{Calculate biwavelet frequency-time matrix for an event}
 \usage{
-calculate_wavelet_matrix(signal, new_step = 0.1, dj = 1/16,
-  s0_factor = 5, s0 = NULL, mother = "morlet", do.sig = FALSE,
-  type = "power", freq_range = c(1, 20), freq_step = 0.1,
-  column_pad = c(0, 0), row_pad = c(0, 0), verbose = FALSE, ...)
+calculate_wavelet_matrix(
+  signal,
+  new_step = 0.1,
+  dj = 1/16,
+  s0_factor = 5,
+  s0 = NULL,
+  mother = "morlet",
+  do.sig = FALSE,
+  type = "power",
+  freq_range = c(1, 20),
+  freq_step = 0.1,
+  column_pad = c(0, 0),
+  row_pad = c(0, 0),
+  verbose = FALSE,
+  ...
+)
 }
 \description{
 Calculate biwavelet frequency-time matrix for an event

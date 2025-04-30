@@ -4,15 +4,28 @@
 \alias{extract_baseline_data}
 \title{Extract animal baseline signal data from raw data}
 \usage{
-extract_baseline_data(con, animal = NULL, project = NULL,
-  phase = NULL, source_filename = NULL, source_dirname = NULL,
-  rdata_filename = NULL, rdata_dirname = NULL,
-  animal_raw_data_table = "animal_raw_data", before_event_only = TRUE,
-  baseline_step = 60, baseline_max_duration = 480,
-  all_start_grep = "^Start", all_start_row = 2,
-  all_start_fixed = NULL, event_grep = "^EV", event_start = 2,
+extract_baseline_data(
+  con,
+  animal = NULL,
+  project = NULL,
+  phase = NULL,
+  source_filename = NULL,
+  source_dirname = NULL,
+  rdata_filename = NULL,
+  rdata_dirname = NULL,
+  animal_raw_data_table = "animal_raw_data",
+  before_event_only = TRUE,
+  baseline_step = 60,
+  baseline_max_duration = 480,
+  all_start_grep = "^Start",
+  all_start_row = 2,
+  all_start_fixed = NULL,
+  event_grep = "^EV",
+  event_start = 2,
   attr_names = c("animal", "channel", "ts.step", "ts"),
-  verbose = FALSE, ...)
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{before_event_only}{logical indicating whether to

@@ -4,9 +4,14 @@
 \alias{list2igraph}
 \title{Convert list to igraph}
 \usage{
-list2igraph(x, delim = "[, \\t]+", type = c("star", "full"),
-  color_sub = c(names = "dodgerblue", values = "gold"), useGrey = 15,
-  ...)
+list2igraph(
+  x,
+  delim = "[, \\t]+",
+  type = c("star", "full"),
+  color_sub = c(names = "dodgerblue", values = "gold"),
+  useGrey = 15,
+  ...
+)
 }
 \arguments{
 \item{x}{list object, or character vector which will be split

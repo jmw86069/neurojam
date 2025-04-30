@@ -4,12 +4,23 @@
 \alias{condense_freq_matrix}
 \title{Condense a spectral frequence data matrix}
 \usage{
-condense_freq_matrix(x, column_n = ncol(x), column_fixed_size = 1,
-  row_n = nrow(x), row_fixed_size = 1, column_method = c("min",
-  "max", "mean"), row_method = c("min", "mean", "max"),
-  column_edge = c("full", "half"), row_edge = c("full", "half"),
-  column_offset = 0, row_offset = 0, column_pad = c(0, 0),
-  row_pad = c(0, 0), verbose = TRUE, ...)
+condense_freq_matrix(
+  x,
+  column_n = ncol(x),
+  column_fixed_size = 1,
+  row_n = nrow(x),
+  row_fixed_size = 1,
+  column_method = c("min", "max", "mean"),
+  row_method = c("min", "mean", "max"),
+  column_edge = c("full", "half"),
+  row_edge = c("full", "half"),
+  column_offset = 0,
+  row_offset = 0,
+  column_pad = c(0, 0),
+  row_pad = c(0, 0),
+  verbose = TRUE,
+  ...
+)
 }
 \description{
 Condense a spectral frequence data matrix
@@ -55,9 +66,10 @@ condense_freq_matrix(freq_m, column_fixed_size=10, row_fixed_size=5)[1:20,1:20]
 
 }
 \seealso{
-Other jam matrix functions: \code{\link{cutIntoChunks}},
-  \code{\link{discretize_labels}},
-  \code{\link{freq_heatmap}},
-  \code{\link{signal_freq_heatmap}}
+Other jam matrix functions: 
+\code{\link{cutIntoChunks}()},
+\code{\link{discretize_labels}()},
+\code{\link{freq_heatmap}()},
+\code{\link{signal_freq_heatmap}()}
 }
 \concept{jam matrix functions}

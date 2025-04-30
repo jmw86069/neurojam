@@ -4,11 +4,24 @@
 \alias{summarize_event_bins}
 \title{Summarize event bins for a numeric matrix}
 \usage{
-summarize_event_bins(x, col_values = NULL, pre_time = 0,
-  post_time = 0, pre_bin_n = 1, time_bin_n = 2, post_bin_n = 1,
-  pre_bin_labels = "pre", time_bin_labels = c("tone", "trace"),
-  post_bin_labels = "post", useMedian = FALSE, trim = NULL,
-  make_tall = FALSE, adj_freq_range = c(3, 5), verbose = FALSE, ...)
+summarize_event_bins(
+  x,
+  col_values = NULL,
+  pre_time = 0,
+  post_time = 0,
+  pre_bin_n = 1,
+  time_bin_n = 2,
+  post_bin_n = 1,
+  pre_bin_labels = "pre",
+  time_bin_labels = c("tone", "trace"),
+  post_bin_labels = "post",
+  useMedian = FALSE,
+  trim = NULL,
+  make_tall = FALSE,
+  adj_freq_range = c(3, 5),
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{numeric matrix whose \code{colnames(x)} represent time.}
@@ -29,7 +42,7 @@ and post-event, respectively.}
 pre-event bin sections, expanded to the number of pre-event bins.}
 
 \item{time_bin_labels}{character vector used to label the
-event bin sections, expanded to the number of event bins.}
+post-event bin sections, expanded to the number of post-event bins.}
 
 \item{useMedian}{logical passed to \code{jamba::rowGroupMeans()}
 indicating whether to use the row median value to summarize
@@ -48,9 +61,6 @@ applied when \code{make_tall=TRUE}, and
 \item{verbose}{logical indicating whether to print verbose output.}
 
 \item{...}{additional arguments are ignored.}
-
-\item{time_bin_labels}{character vector used to label the
-post-event bin sections, expanded to the number of post-event bins.}
 }
 \value{
 numeric \code{matrix} whose colnames are the event bins

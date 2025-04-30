@@ -4,13 +4,25 @@
 \alias{get_ephys_event_data}
 \title{Get Ephys event data}
 \usage{
-get_ephys_event_data(mat_l, channels, events = NULL,
-  event_offset = NULL, event_start = 2, event_stop = 3,
-  default_event_diff = 40, event_prestart = 4000,
-  event_poststop = 4000, event_label = "Tone", event_grep = "^EV",
+get_ephys_event_data(
+  mat_l,
+  channels,
+  events = NULL,
+  event_offset = NULL,
+  event_start = 2,
+  event_stop = 3,
+  default_event_diff = 40,
+  event_prestart = 4000,
+  event_poststop = 4000,
+  event_label = "Tone",
+  event_grep = "^EV",
   attr_names = c("animal", "channel", "ts.step", "ts"),
-  all_start_grep = "^Start", all_start_row = 2,
-  all_start_fixed = NULL, verbose = FALSE, ...)
+  all_start_grep = "^Start",
+  all_start_row = 2,
+  all_start_fixed = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{mat_l}{\code{list} containing raw signal output from
@@ -77,6 +89,7 @@ start offset can be verified by using argument \code{verbose=TRUE}.}
 Get Ephys event data
 }
 \seealso{
-Other jam event functions: \code{\link{plot_ephys_event_data}}
+Other jam event functions: 
+\code{\link{plot_ephys_event_data}()}
 }
 \concept{jam event functions}

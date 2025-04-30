@@ -72,7 +72,7 @@ Only \code{"fc.time"} will be tested for existence of a column index,
 in the table \code{"file_channel"}.
 \item Within some reason, math is parsed to remove non-database
 columns, for example \code{"fc.time_step*fc.nrow/60 as minutes"}
-is recognized with fields \code{"fc.time", "fc.nrow"} and the alias
+is recognized with fields \verb{"fc.time", "fc.nrow"} and the alias
 name \code{"minutes"}.
 \item A column index is only tested in the table referenced in the
 table alias of the SELECT clause, even when the field is involved
@@ -115,14 +115,16 @@ sqlite_view(db, "ff_view")
 
 }
 \seealso{
-Other jam database functions: \code{\link{ephys_short_name}},
-  \code{\link{extract_event_data}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_data}},
-  \code{\link{save_animal_event_derived}},
-  \code{\link{save_animal_raw_data}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}}
+Other jam database functions: 
+\code{\link{ephys_short_name}()},
+\code{\link{extract_event_data}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_data}()},
+\code{\link{save_animal_event_derived}()},
+\code{\link{save_animal_raw_data}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()}
 }
 \concept{jam database functions}

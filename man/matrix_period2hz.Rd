@@ -4,9 +4,16 @@
 \alias{matrix_period2hz}
 \title{Convert matrix scale from period to Hertz units}
 \usage{
-matrix_period2hz(x, row_values = NULL, freq_range = c(1, 20),
-  freq_step = 0.2, freq_method = c("2"), do_rev = FALSE,
-  verbose = FALSE, ...)
+matrix_period2hz(
+  x,
+  row_values = NULL,
+  freq_range = c(1, 20),
+  freq_step = 0.2,
+  freq_method = c("2"),
+  do_rev = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \value{
 numeric matrix whose rows are in units of frequency

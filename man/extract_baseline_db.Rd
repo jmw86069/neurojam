@@ -4,13 +4,25 @@
 \alias{extract_baseline_db}
 \title{Extract animal baseline signal data from raw db}
 \usage{
-extract_baseline_db(con, filename = NULL, project = NULL,
-  phase = NULL, file_table = "ephys_file",
-  file_event_table = "file_event", file_channel_table = "file_channel",
+extract_baseline_db(
+  con,
+  filename = NULL,
+  project = NULL,
+  phase = NULL,
+  file_table = "ephys_file",
+  file_event_table = "file_event",
+  file_channel_table = "file_channel",
   file_channel_event_table = "file_channel_event",
-  before_event_only = TRUE, event_prestart = 4, baseline_step = 60,
-  baseline_max_duration = 480, all_start_fixed = NULL,
-  event_type = "baseline", load_db = TRUE, verbose = FALSE, ...)
+  before_event_only = TRUE,
+  event_prestart = 4,
+  baseline_step = 60,
+  baseline_max_duration = 480,
+  all_start_fixed = NULL,
+  event_type = "baseline",
+  load_db = TRUE,
+  verbose = FALSE,
+  ...
+)
 }
 \description{
 Extract animal baseline signal data from raw db

@@ -4,15 +4,29 @@
 \alias{import_ephys_file}
 \title{Import Ephys raw data file into relational database}
 \usage{
-import_ephys_file(filename, con, mat_l = NULL, project = "",
-  phase = "", file_table = "ephys_file",
-  file_event_table = "file_event", file_channel_table = "file_channel",
+import_ephys_file(
+  filename,
+  con,
+  mat_l = NULL,
+  project = "",
+  phase = "",
+  file_table = "ephys_file",
+  file_event_table = "file_event",
+  file_channel_table = "file_channel",
   channel_grep = "^(AI|FP)(0[1-4]|1[7-9]|2[0])$",
-  time_step_grep = "[.]ts[.]step$", index_offset_grep = "[.]ind$",
-  event_grep = "^EVT[0-9]+$", drop_grep = "^(WB|SP|AI|FP).*$",
-  start_grep = "^Start$", stop_grep = "^Stop$",
-  duration_grep = "^AllFile$", valid = TRUE, override = FALSE,
-  override_method = c("invalidate", "delete"), verbose = TRUE, ...)
+  time_step_grep = "[.]ts[.]step$",
+  index_offset_grep = "[.]ind$",
+  event_grep = "^EVT[0-9]+$",
+  drop_grep = "^(WB|SP|AI|FP).*$",
+  start_grep = "^Start$",
+  stop_grep = "^Stop$",
+  duration_grep = "^AllFile$",
+  valid = TRUE,
+  override = FALSE,
+  override_method = c("invalidate", "delete"),
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{filename}{character string or vector of file names to import.

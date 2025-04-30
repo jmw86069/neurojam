@@ -4,8 +4,14 @@
 \alias{cutIntoChunks}
 \title{Cut vector into a list of fixed size}
 \usage{
-cutIntoChunks(x, n = 1, fixed_size = 1, offset = 0,
-  edge_rule = c("full", "half"), ...)
+cutIntoChunks(
+  x,
+  n = 1,
+  fixed_size = 1,
+  offset = 0,
+  edge_rule = c("full", "half"),
+  ...
+)
 }
 \arguments{
 \item{x}{\code{vector}, or any R object compatible with \code{base::split()}.}
@@ -65,9 +71,10 @@ lengths(cutIntoChunks(x, n=8))
 
 }
 \seealso{
-Other jam matrix functions: \code{\link{condense_freq_matrix}},
-  \code{\link{discretize_labels}},
-  \code{\link{freq_heatmap}},
-  \code{\link{signal_freq_heatmap}}
+Other jam matrix functions: 
+\code{\link{condense_freq_matrix}()},
+\code{\link{discretize_labels}()},
+\code{\link{freq_heatmap}()},
+\code{\link{signal_freq_heatmap}()}
 }
 \concept{jam matrix functions}

@@ -4,18 +4,41 @@
 \alias{event_freq_profile}
 \title{Calculate animal event frequency profile}
 \usage{
-event_freq_profile(eventsm, step = NULL, animal = NULL,
-  channel = NULL, event = NULL, project = NULL, phase = NULL,
-  event_prestart = NULL, event_poststop = NULL, pre_bin_n = 1,
-  time_bin_n = 2, post_bin_n = 1, pre_bin_labels = "pre",
-  time_bin_labels = c("tone", "trace"), post_bin_labels = "post",
-  new_step = 0.1, x_condense_factor = new_step/step, dj = 1/6,
-  s0_factor = 5, s0 = step * s0_factor, mother = "morlet",
-  do.sig = FALSE, freq_range = c(1, 20), freq_step = 0.2,
-  freq_method = c("2"), adj_freq_range = c(3, 5),
-  return_type = c("profile", "list"), con = NULL,
+event_freq_profile(
+  eventsm,
+  step = NULL,
+  animal = NULL,
+  channel = NULL,
+  event = NULL,
+  project = NULL,
+  phase = NULL,
+  event_prestart = NULL,
+  event_poststop = NULL,
+  pre_bin_n = 1,
+  time_bin_n = 2,
+  post_bin_n = 1,
+  pre_bin_labels = "pre",
+  time_bin_labels = c("tone", "trace"),
+  post_bin_labels = "post",
+  new_step = 0.1,
+  x_condense_factor = new_step/step,
+  dj = 1/6,
+  s0_factor = 5,
+  s0 = step * s0_factor,
+  mother = "morlet",
+  do.sig = FALSE,
+  freq_range = c(1, 20),
+  freq_step = 0.2,
+  freq_method = c("2"),
+  adj_freq_range = c(3, 5),
+  return_type = c("profile", "list"),
+  con = NULL,
   animal_event_derived_table = "animal_event_derived",
-  useMedian = FALSE, dryrun = FALSE, verbose = FALSE, ...)
+  useMedian = FALSE,
+  dryrun = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{eventsm}{numeric matrix whose first column contains
@@ -30,7 +53,7 @@ stop, respectively. Practically, this adjustment allows
 calculating a proper \code{zero} time point, and to indicate
 when the official event duration ends.
 \code{eventsm} can also be a list, in which case all arguments
-\code{animal,step,channel,project,phase,event_prestart,event_poststop}
+\verb{animal,step,channel,project,phase,event_prestart,event_poststop}
 are required to be present as attributes of each item in the
 list.}
 
@@ -44,7 +67,7 @@ the number of bins to sub-divide each time window:
 
 \item{pre_bin_labels, time_bin_labels, post_bin_labels}{character
 string or vector indicating how to many the bins for each
-time window, when any of \code{pre_bin_n,time_bin_n,post_bin_n}
+time window, when any of \verb{pre_bin_n,time_bin_n,post_bin_n}
 are greater than 1. The character string is extended to the
 appropriate length, then make unique with
 \code{jamba::makeNames(..., suffix="_")}.}

@@ -4,11 +4,19 @@
 \alias{import_ephys_mat_1}
 \title{Import single MatLab .mat file}
 \usage{
-import_ephys_mat_1(mat_file, animal, channels_per_animal = 5,
+import_ephys_mat_1(
+  mat_file,
+  animal,
+  channels_per_animal = 5,
   channels_to_retain = seq_len(channels_per_animal - 1),
-  channel_grep = c("^FP[0-9]+$", "^AI[0-9]+$"), channel_grep_n = 1,
-  min_channel_rows = 750000, drop_unused_channels = TRUE,
-  drop_grep = "^SPKC|^WB", verbose = FALSE, ...)
+  channel_grep = c("^FP[0-9]+$", "^AI[0-9]+$"),
+  channel_grep_n = 1,
+  min_channel_rows = 750000,
+  drop_unused_channels = TRUE,
+  drop_grep = "^SPKC|^WB",
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{mat_file}{one of the recognized inputs:
@@ -128,6 +136,7 @@ channels are retained, defined with argument
 \code{channels_to_retain}.
 }
 \seealso{
-Other jam import functions: \code{\link{import_ephys_mat}}
+Other jam import functions: 
+\code{\link{import_ephys_mat}()}
 }
 \concept{jam import functions}

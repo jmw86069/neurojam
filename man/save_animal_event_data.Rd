@@ -4,11 +4,22 @@
 \alias{save_animal_event_data}
 \title{Save event signal data per animal}
 \usage{
-save_animal_event_data(con, events_m, animal = NULL, project = NULL,
-  phase = NULL, step = NULL, event_prestart = NULL,
-  event_poststop = NULL, event_type = "event",
-  animal_event_data_table = "animal_event_data", overwrite = FALSE,
-  dryrun = FALSE, verbose = FALSE, ...)
+save_animal_event_data(
+  con,
+  events_m,
+  animal = NULL,
+  project = NULL,
+  phase = NULL,
+  step = NULL,
+  event_prestart = NULL,
+  event_poststop = NULL,
+  event_type = "event",
+  animal_event_data_table = "animal_event_data",
+  overwrite = FALSE,
+  dryrun = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{con}{database connection with class \code{DBIConnection},
@@ -75,14 +86,16 @@ This function saves the subset of raw signal per
 per animal, per channel, and per annotated event.
 }
 \seealso{
-Other jam database functions: \code{\link{ephys_short_name}},
-  \code{\link{extract_event_data}},
-  \code{\link{get_animal_event_data}},
-  \code{\link{get_animal_event_derived}},
-  \code{\link{get_animal_raw_data}},
-  \code{\link{save_animal_event_derived}},
-  \code{\link{save_animal_raw_data}},
-  \code{\link{sqlite_desc}}, \code{\link{sqlite_indices}},
-  \code{\link{sqlite_view}}
+Other jam database functions: 
+\code{\link{ephys_short_name}()},
+\code{\link{extract_event_data}()},
+\code{\link{get_animal_event_data}()},
+\code{\link{get_animal_event_derived}()},
+\code{\link{get_animal_raw_data}()},
+\code{\link{save_animal_event_derived}()},
+\code{\link{save_animal_raw_data}()},
+\code{\link{sqlite_desc}()},
+\code{\link{sqlite_indices}()},
+\code{\link{sqlite_view}()}
 }
 \concept{jam database functions}

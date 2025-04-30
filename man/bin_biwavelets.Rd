@@ -4,11 +4,22 @@
 \alias{bin_biwavelets}
 \title{Binned biwavelet signal processing}
 \usage{
-bin_biwavelets(x, dt = NULL, max_duration_sec = 30, buffer_sec = 2,
-  dj = 1/16, s0 = 0.005, J1 = 240, max.scale = 163,
-  new_step = 0.1, min_fraction = 0.4, return_type = c("matrix",
-  "trimmed_list", "untrimmed_list"), dryrun = FALSE, verbose = FALSE,
-  ...)
+bin_biwavelets(
+  x,
+  dt = NULL,
+  max_duration_sec = 30,
+  buffer_sec = 2,
+  dj = 1/16,
+  s0 = 0.005,
+  J1 = 240,
+  max.scale = 163,
+  new_step = 0.1,
+  min_fraction = 0.4,
+  return_type = c("matrix", "trimmed_list", "untrimmed_list"),
+  dryrun = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{numeric vector or matrix representing the source signal.}
